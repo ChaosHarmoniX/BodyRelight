@@ -13,9 +13,18 @@ class BodyRelightNet(nn.Module):
 
         self.albedo_decoder = Decoder()
         self.transport_decoder = Decoder()
-        self.light_decoder = MultiConv(filter_channels=[]) # 四层卷积，但文章中没有说具体的，只知道最终输出为27维
+        self.light_decoder = MultiConv(filter_channels=[]) # TODO: 四层卷积，但文章中没有说具体的，只知道最终输出为27维
     
     def forward(self, x):
+        '''
+        :param x: 
+        --                                                                     --
+        |    +- [r, g, b], [r, g, b]... -+    +- [r, g, b], [r, g, b]... -+     |
+        |    |  [r, g, b], [r, g, b]... -|    |  [r, g, b], [r, g, b]... -|     |
+        |    +- [r, g, b], [r, g, b]... -+,   +- [r, g, b], [r, g, b]... -+     |
+        --                                                                     --
+        一批量有多张图, 每张图里有多个像素点, 每个像素点有三个channel
+        '''
         feature = self.encoder(x)
         
         albedo_feature, albedo_map = self.albedo_decoder(feature)
