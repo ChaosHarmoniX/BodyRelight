@@ -1,5 +1,6 @@
-from ..lib.model.BodyRelightNet import BodyRelightNet
+from lib.model.BodyRelightNet import BodyRelightNet
 from lib.model.Conv import *
+from lib.model.loss_util import loss
 import torch
 from torch import nn
 
@@ -58,9 +59,11 @@ def train(net, train_iter, loss, num_epochs, updater):
 def train_epoch(net, train_iter, loss, updater):
     net.train() # 设为训练模式
     
-    for X, y in train_iter:
-        y_hat = net(X)
-        l = loss(y_hat, y)
+    for image, mask, albedo_gt, light_gt, transport_gt in train_iter:
+        masked_image = image * mask
+        albedo_hat, light_hat, transport_hat = net(masked_image)
+        image_hat = albedo_hat * (transport_hat * light_hat)
+        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, masked_image)
         updater.zero_grad()
         l.backward()
         updater.step()
