@@ -1,3 +1,10 @@
+'''
+    Import this from PIFu:  
+    Usage:
+        指定数据的路径 得到PRT预计算的bounce数据
+        由于生成数据使用的是PRT方法 所以需要先执行这一步
+        所以先于render_data.py执行
+'''
 import os
 import trimesh
 import numpy as np
@@ -146,10 +153,13 @@ def testPRT(dir_path, n=40):
     np.save(os.path.join(dir_path, 'bounce', 'face.npy'), F)
 
 
+# 在这里指定模型的路径，如：D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/
+data_pathes='D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/'
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str,
-                        default='D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/')
+                        default=data_pathes)
     parser.add_argument('-n', '--n_sample', type=int, default=40,
                         help='squared root of number of sampling. the higher, the more accurate, but slower')
     args = parser.parse_args()

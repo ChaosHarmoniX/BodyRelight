@@ -23,7 +23,7 @@ def get_meshes_pathes(dataset_path: str):
                 meshes_pathes.append(os.path.join(root,file))
     return meshes_pathes
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     meshes_pathes=get_meshes_pathes(dataset_path)
     # for mesh_path in meshes_pathes:
     #     mesh=tm.load(mesh_path)

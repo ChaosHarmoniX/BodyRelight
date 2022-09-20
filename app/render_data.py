@@ -1,3 +1,13 @@
+'''
+    Import this from PIFu: https://github.com/shunsukesaito/PIFu
+    Usage:
+        指定数据的路径 根据与计算出的结果 结合SH参数 生成渲染数据
+        由于生成数据使用的是PRT方法 所以需要先执行prt_util.py中的方法
+'''
+
+
+
+
 from re import sub
 import sys
 import os
@@ -187,7 +197,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
     if not os.path.exists(face_prt_file):
         print('ERROR: face prt file does not exist!!!', prt_file)
         return
-    text_file = os.path.join(folder_name, 'tex', subject_name + '_dif_2k.jpg')
+    text_file = os.path.join(folder_name,  'material0.jpeg')
     if not os.path.exists(text_file):
         print('ERROR: dif file does not exist!!', text_file)
         return
@@ -305,6 +315,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
                     cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
                                 subject_name, '00.png'), 255.0*uv_nml)
 
+# 在这里设置你的数据集路径，需要精确到每个模型的obj文件所在的文件夹
 dataset_path="D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/"
 
 if __name__ == '__main__':
