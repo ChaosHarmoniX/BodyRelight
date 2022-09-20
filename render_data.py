@@ -1,3 +1,4 @@
+from re import sub
 import sys
 import os
 
@@ -174,7 +175,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
     cam.sanity_check()
 
     # set path for obj, prt
-    mesh_file = os.path.join(folder_name, subject_name + '_100k.obj')
+    mesh_file = os.path.join(folder_name, subject_name + '.obj')
     if not os.path.exists(mesh_file):
         print('ERROR: obj file does not exist!!', mesh_file)
         return
@@ -304,13 +305,13 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
                     cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
                                 subject_name, '00.png'), 255.0*uv_nml)
 
+dataset_path="D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/"
 
 if __name__ == '__main__':
     shs = np.load('./env_sh.npy')
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str,
-                        default='data/rp_dennis_posed_004_OBJ')
+                        default=dataset_path)
     parser.add_argument('-o', '--out_dir', type=str,
                         default='./data')
     parser.add_argument('-m', '--ms_rate', type=int, default=1,
@@ -330,9 +331,12 @@ if __name__ == '__main__':
                      ms_rate=args.ms_rate, egl=args.egl)
     rndr_uv = PRTRender(width=args.size, height=args.size,
                         uv_mode=True, egl=args.egl)
-
+    
     if args.input[-1] == '/':
         args.input = args.input[:-1]
-    subject_name = args.input.split('/')[-1][:-4]
+    print(args.input)
+    # 在/后面的名字作为subject_name
+    subject_name = args.input.split('/')[-1]
+    print(subject_name)
     render_prt_ortho(args.out_dir, args.input, subject_name,
                      shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
