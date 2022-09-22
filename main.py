@@ -23,7 +23,7 @@ def render_exr(exrpath:str)-> None:
     rgb = rgb.transpose(1, 2, 0)
     rgb = np.clip(rgb, 0, 1)
     rgb = (rgb * 255).astype(np.uint8)
-    cv2.imwrite(filename+".png", rgb)
+    cv2.imwrite(filename[:-4]+".png", rgb)
 
 
 
