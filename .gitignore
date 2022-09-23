@@ -1,4 +1,11 @@
+# Assets file
 assets/
+
+# Temporary files
 *.pyc
+*.npy
 *__pycache__/
+
+# Generated files
 data/
+output/
