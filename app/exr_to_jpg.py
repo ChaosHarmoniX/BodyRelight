@@ -28,3 +28,5 @@ if __name__ == '__main__':
     for exr_path in exr_paths:
         cnt += 1
         render_exr(exr_path, output_folder, str(cnt))
+        if cnt > 10:
+            break
