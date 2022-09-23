@@ -4,4 +4,4 @@ all:clean
 clean:
 	rm -rf */__pycache__/
 	rm -r output/*
-	rm -r data/
+	rm -r data/*

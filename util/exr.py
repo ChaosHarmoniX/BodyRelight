@@ -16,12 +16,14 @@ def render_exr(exrpath:str,target_folder:str,target_name:str)-> None:
     rgb = np.array(rgb)
     rgb = rgb.reshape(3, Size[1], Size[0])
     rgb = rgb.transpose(1, 2, 0)
-    rgb=np.clip(np.power(rgb,1/2.2),0,1)
-
+    rgb=np.clip(rgb,0,1)
+    rgb=np.power(rgb,0.25)
+    rgb=np.clip(rgb,0,1)
     rgb = (rgb * 255).astype(np.uint8)
     target_path=os.path.join(target_folder,target_name+".jpg")
     cv2.imwrite(target_path,rgb)
 
+# 另一种网上找到的方法
 def render_exr_another_way(exrpath:str)-> None:
     base_num=2**16-1
     print(base_num)
