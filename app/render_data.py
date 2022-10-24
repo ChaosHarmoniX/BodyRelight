@@ -316,10 +316,10 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
                                 subject_name, '00.png'), 255.0*uv_nml)
 
 # 在这里设置你的数据集路径，需要精确到每个模型的obj文件所在的文件夹
-dataset_path="D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/"
+dataset_path="D:/workspace/SRTP/data/THuman2.0_new/0000"
 
 if __name__ == '__main__':
-    shs = np.load('./env_sh.npy')
+    shs = np.load('./datas/sh/env_sh.npy')
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str,
                         default=dataset_path)
