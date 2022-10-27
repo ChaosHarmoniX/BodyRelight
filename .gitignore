@@ -8,5 +8,6 @@ assets/
 
 # Generated files
 data/
+!lib/data/
 datas/
 output/
