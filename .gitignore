@@ -8,6 +8,12 @@ assets/
 
 # Generated files
 data/
+<<<<<<< HEAD
 datas/shres/
 output/
 scdata/
+=======
+!lib/data/
+datas/
+output/
+>>>>>>> 57d705cf6e0cc9e82395efee4fc2ee25fa640bbb
