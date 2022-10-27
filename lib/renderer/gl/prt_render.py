@@ -53,6 +53,10 @@ class PRTRender(CamRender):
 
         self.rot_mat_unif = glGetUniformLocation(self.program, 'RotMat')
         self.rot_matrix = np.eye(3)
+        
+        ### sc
+        self.sc_setAlbedo=True
+        self.sc_setNormal=True
 
     def set_texture(self, mat_name, smplr_name, texture):
         # texture_image: H x W x 3
@@ -269,12 +273,12 @@ class PRTRender(CamRender):
         glUniformMatrix4fv(self.model_mat_unif, 1, GL_FALSE, self.model_view_matrix.transpose())
         glUniformMatrix4fv(self.persp_mat_unif, 1, GL_FALSE, self.projection_matrix.transpose())
 
-        if 'AlbedoMap' in self.render_texture_mat['all']:
+        if 'AlbedoMap' in self.render_texture_mat['all'] and self.sc_setAlbedo == True:
             glUniform1ui(self.hasAlbedoUnif, GLuint(1))
         else:
             glUniform1ui(self.hasAlbedoUnif, GLuint(0))
 
-        if 'NormalMap' in self.render_texture_mat['all']:
+        if 'NormalMap' in self.render_texture_mat['all'] and self.sc_setNormal == True:
             glUniform1ui(self.hasNormalUnif, GLuint(1))
         else:
             glUniform1ui(self.hasNormalUnif, GLuint(0))

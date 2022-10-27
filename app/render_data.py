@@ -35,6 +35,9 @@ import random
 import pyexr
 import argparse
 from tqdm import tqdm
+from lib.renderer.gl.prt_render import PRTRender
+from lib.renderer.gl.render import Render
+from lib.renderer.gl.cam_render import CamRender
 
 
 
@@ -177,7 +180,7 @@ def rotateBand2(x, R):
     return dst
 
 
-def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im_size, angl_step=4, n_light=1, pitch=[0]):
+def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, rndr_uv:PRTRender, im_size, angl_step=4, n_light=1, pitch=[0]):
     cam = Camera(width=im_size, height=im_size)
     cam.ortho_ratio = 0.4 * (512 / im_size)
     cam.near = -100
@@ -315,6 +318,144 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr, rndr_uv, im
                     cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
                                 subject_name, '00.png'), 255.0*uv_nml)
 
+
+
+
+def render_albedo_map(out_path, folder_name, subject_name, shs, rndr:CamRender , rndr_uv:CamRender, im_size, angl_step=4, n_light=1, pitch=[0]):
+    # 和上面的唯一不同之处是：shs没用上。。。
+    cam = Camera(width=im_size, height=im_size)
+    cam.ortho_ratio = 0.4 * (512 / im_size)
+    cam.near = -100
+    cam.far = 100
+    cam.sanity_check()
+
+    # set path for obj, prt
+    mesh_file = os.path.join(folder_name, subject_name + '.obj')
+    if not os.path.exists(mesh_file):
+        print('ERROR: obj file does not exist!!', mesh_file)
+        return
+    prt_file = os.path.join(folder_name, 'bounce', 'bounce0.txt')
+    if not os.path.exists(prt_file):
+        print('ERROR: prt file does not exist!!!', prt_file)
+        return
+    face_prt_file = os.path.join(folder_name, 'bounce', 'face.npy')
+    if not os.path.exists(face_prt_file):
+        print('ERROR: face prt file does not exist!!!', prt_file)
+        return
+    text_file = os.path.join(folder_name,  'material0.jpeg')
+    
+    if not os.path.exists(text_file):
+        print('ERROR: dif file does not exist!!', text_file)
+        return
+
+    texture_image = cv2.imread(text_file)
+    texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
+
+    vertices, faces, normals, faces_normals, textures, face_textures = load_obj_mesh(
+        mesh_file, with_normal=True, with_texture=True)
+    vmin = vertices.min(0)
+    vmax = vertices.max(0)
+    up_axis = 1 if (vmax-vmin).argmax() == 1 else 2
+
+    vmed = np.median(vertices, 0)
+    vmed[up_axis] = 0.5*(vmax[up_axis]+vmin[up_axis])
+    y_scale = 180/(vmax[up_axis] - vmin[up_axis])
+
+
+
+    tan, bitan = compute_tangent(
+        vertices, faces, normals, textures, face_textures)
+    prt = np.loadtxt(prt_file)
+    face_prt = np.load(face_prt_file)
+    rndr.set_mesh(vertices, faces, normals, faces_normals,
+                  textures, face_textures, prt, face_prt, tan, bitan)
+
+    rndr_uv.set_mesh(vertices, faces, normals, faces_normals,
+                     textures, face_textures, prt, face_prt, tan, bitan)
+
+    os.makedirs(os.path.join(out_path, 'GEO',
+                'OBJ', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'PARAM', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'RENDER', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'MASK', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'UV_RENDER',
+                subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'UV_MASK', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'UV_POS', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'UV_NORMAL',
+                subject_name), exist_ok=True)
+
+    if not os.path.exists(os.path.join(out_path, 'val.txt')):
+        f = open(os.path.join(out_path, 'val.txt'), 'w')
+        f.close()
+
+    # copy obj file
+    cmd = 'cp %s %s' % (mesh_file, os.path.join(
+        out_path, 'GEO', 'OBJ', subject_name))
+    print(cmd)
+    os.system(cmd)
+
+    for p in pitch: # 俯仰角
+        for y in tqdm(range(0, 360, angl_step)): # 平面角度
+            R = np.matmul(make_rotate(math.radians(p), 0, 0),
+                          make_rotate(0, math.radians(y), 0))# 整个模型的旋转矩阵
+            if up_axis == 2:
+                R = np.matmul(R, make_rotate(math.radians(90), 0, 0))
+
+            rndr.set_camera(cam)
+            rndr_uv.set_camera(cam)
+            
+            # rndr.sc_setAlbedo=False
+
+            for j in range(n_light): # 对于每个视角，实施几种光照
+                sh = shs[0]
+                sh = np.zeros(sh.shape)
+                sh[0][0]+=1
+                sh[0][1]+=1
+                sh[0][2]+=1
+
+                dic = {'sh': sh, 'ortho_ratio': cam.ortho_ratio,
+                       'scale': y_scale, 'center': vmed, 'R': R}
+
+                rndr.use_inverse_depth = False
+                rndr.display()
+
+                out_all_f = rndr.get_color(0)
+                out_mask = out_all_f[:, :, 3]
+                out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
+
+                np.save(os.path.join(out_path, 'PARAM', subject_name,
+                        '%d_%d_%02d.npy' % (y, p, j)), dic)
+                cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
+                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
+                cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
+                            '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
+
+                rndr_uv.use_inverse_depth = False
+                rndr_uv.display()
+
+                uv_color = rndr_uv.get_color(0)
+                uv_color = cv2.cvtColor(uv_color, cv2.COLOR_RGBA2BGR)
+                cv2.imwrite(os.path.join(out_path, 'UV_RENDER', subject_name,
+                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*uv_color)
+
+                if y == 0 and j == 0 and p == pitch[0]:
+                    uv_pos = rndr_uv.get_color(1)
+                    uv_mask = uv_pos[:, :, 3]
+                    cv2.imwrite(os.path.join(out_path, 'UV_MASK',
+                                subject_name, '00.png'), 255.0*uv_mask)
+
+                    # default is a reserved name
+                    data = {'default': uv_pos[:, :, :3]}
+                    pyexr.write(os.path.join(out_path, 'UV_POS',
+                                subject_name, '00.exr'), data)
+
+                    uv_nml = rndr_uv.get_color(2)
+                    uv_nml = cv2.cvtColor(uv_nml, cv2.COLOR_RGBA2BGR)
+                    cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
+                                subject_name, '00.png'), 255.0*uv_nml)
+                    exit
+    
 # 在这里设置你的数据集路径，需要精确到每个模型的obj文件所在的文件夹
 dataset_path="D:/workspace/SRTP/data/THuman2.0_new/0000"
 
@@ -343,11 +484,14 @@ if __name__ == '__main__':
     rndr_uv = PRTRender(width=args.size, height=args.size,
                         uv_mode=True, egl=args.egl)
     
+    
     if args.input[-1] == '/':
         args.input = args.input[:-1]
     print(args.input)
     # 在/后面的名字作为subject_name
     subject_name = args.input.split('/')[-1]
     print(subject_name)
-    render_prt_ortho(args.out_dir, args.input, subject_name,
+    # render_prt_ortho(args.out_dir, args.input, subject_name,
+    #                  shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
+    render_albedo_map(args.out_dir, args.input, subject_name,
                      shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])

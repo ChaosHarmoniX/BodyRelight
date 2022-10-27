@@ -8,7 +8,8 @@ GLUT = None
 # NOTE: Render class assumes GL context is created already.
 class Render:
     def __init__(self, width=1600, height=1200, name='GL Renderer',
-                 program_files=['simple.fs', 'simple.vs'], color_size=1, ms_rate=1, egl=False):
+                 program_files= ['simple.fs', 'simple.vs']
+                 , color_size=1, ms_rate=1, egl=False):
         self.width = width
         self.height = height
         self.name = name
