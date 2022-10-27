@@ -72,10 +72,14 @@ def train_epoch(net, train_dataloader, loss, updater):
         light_gt = train_data['light']
         transport_gt = train_data['transport']
 
-        masked_image = image * mask
-        albedo_hat, light_hat, transport_hat = net(masked_image)
-        image_hat = albedo_hat * (transport_hat * light_hat)
-        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, masked_image)
+        albedo_hat, light_hat, transport_hat = net(image)
+        for i in range(albedo_hat.shape[0]): # mask the output
+            if not mask[i]:
+                albedo_hat[i] = [0, 0, 0]
+                transport_hat[i] = [0] * 9
+        
+        image_hat = albedo_hat * (transport_hat @ light_hat)
+        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image)
         updater.zero_grad()
         l.backward()
         updater.step()

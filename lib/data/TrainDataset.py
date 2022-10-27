@@ -1,13 +1,7 @@
 from torch.utils.data import Dataset
 import numpy as np
 import os
-import random
-import torchvision.transforms as transforms
-from PIL import Image, ImageOps
 import cv2
-import torch
-from PIL.ImageFilter import GaussianBlur
-import logging
 
 class TrainDataset(Dataset):
     @staticmethod
@@ -67,24 +61,32 @@ class TrainDataset(Dataset):
         mask_path = os.path.join(self.MASK, '%03d.png' % (subject_id)) # for obj in different lights, the mask remains the same
         albedo_path = os.path.join(self.ALBEDO, subject, '%03d.jpg' % (light_id))
         light_path = os.path.join(self.LIGHT, str(self.lights[light_id]))
-        print(light_path)
         transport_path = os.path.join(self.TRANSPORT, subject, '%03d.npy' % (light_id))
 
         # --------- Read groundtruth file data ------------
-        # image
-        # [H, W, 3] 0 ~ 1 float
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) / 255.0
-
         # mask
         # [H, W] bool
         mask = cv2.imread(mask_path)
         mask = mask[:, :, 0] != 0
 
+        # image
+        # [H, W, 3] 0 ~ 1 float
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) / 255.0
+        for i in range(image.shape[0]): # mask image
+            for j in range(image.shape[1]):
+                if not mask[i][j]:
+                    image[i][j] = [0, 0, 0]
+
+
         # albedo
         # [H, W, 3] 0 ~ 1 float
         albedo = cv2.imread(albedo_path)
         albedo = cv2.cvtColor(albedo, cv2.COLOR_BGR2RGB) / 255.0
+        for i in range(albedo.shape[0]): # mask albedo
+            for j in range(albedo.shape[1]):
+                if not mask[i][j]:
+                    albedo[i][j] = [0, 0, 0]
 
         # light
         # [9, 3] SH coefficient
@@ -93,6 +95,10 @@ class TrainDataset(Dataset):
         # transport
         # [H, W, 9]
         transport = np.load(transport_path) # TODO: 进一步cvt
+        for i in range(transport.shape[0]): # mask transport
+            for j in range(transport.shape[1]):
+                if not mask[i][j]:
+                    transport[i][j] = [0] * 9
 
         # flatten
         image = image.reshape((-1, 3))
