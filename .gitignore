@@ -3,10 +3,11 @@ assets/
 
 # Temporary files
 *.pyc
-*.npy
+# *.npy
 *__pycache__/
 
 # Generated files
 data/
-datas/
+datas/shres/
 output/
+scdata/

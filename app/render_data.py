@@ -224,7 +224,9 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
     tan, bitan = compute_tangent(
         vertices, faces, normals, textures, face_textures)
     prt = np.loadtxt(prt_file)
+    print("prt : bounce0 shape is :", prt.shape)
     face_prt = np.load(face_prt_file)
+    print("face_prt : face shape is :", face_prt.shape)
     rndr.set_mesh(vertices, faces, normals, faces_normals,
                   textures, face_textures, prt, face_prt, tan, bitan)
     rndr.set_albedo(texture_image)
@@ -321,7 +323,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
 
 
 
-def render_albedo_map(out_path, folder_name, subject_name, shs, rndr:CamRender , rndr_uv:CamRender, im_size, angl_step=4, n_light=1, pitch=[0]):
+def render_albedo_map(out_path, folder_name, subject_name, shs, rndr:PRTRender , rndr_uv:PRTRender, im_size, angl_step=4, n_light=1, pitch=[0]):
     # 和上面的唯一不同之处是：shs没用上。。。
     cam = Camera(width=im_size, height=im_size)
     cam.ortho_ratio = 0.4 * (512 / im_size)
@@ -417,19 +419,19 @@ def render_albedo_map(out_path, folder_name, subject_name, shs, rndr:CamRender ,
                 dic = {'sh': sh, 'ortho_ratio': cam.ortho_ratio,
                        'scale': y_scale, 'center': vmed, 'R': R}
 
-                rndr.use_inverse_depth = False
-                rndr.display()
+                # rndr.use_inverse_depth = False
+                # rndr.display()
 
-                out_all_f = rndr.get_color(0)
-                out_mask = out_all_f[:, :, 3]
-                out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
+                # out_all_f = rndr.get_color(0)
+                # out_mask = out_all_f[:, :, 3]
+                # out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
 
-                np.save(os.path.join(out_path, 'PARAM', subject_name,
-                        '%d_%d_%02d.npy' % (y, p, j)), dic)
-                cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
-                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
-                cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
-                            '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
+                # np.save(os.path.join(out_path, 'PARAM', subject_name,
+                #         '%d_%d_%02d.npy' % (y, p, j)), dic)
+                # cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
+                #             '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
+                # cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
+                #             '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
 
                 rndr_uv.use_inverse_depth = False
                 rndr_uv.display()
@@ -493,5 +495,5 @@ if __name__ == '__main__':
     print(subject_name)
     # render_prt_ortho(args.out_dir, args.input, subject_name,
     #                  shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
-    render_albedo_map(args.out_dir, args.input, subject_name,
+    render_prt_ortho(args.out_dir, args.input, subject_name,
                      shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])

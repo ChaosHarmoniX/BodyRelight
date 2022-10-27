@@ -118,7 +118,8 @@ def computePRT(mesh_path, n, order):
                        n_v, axis=0).reshape(-1, SH_orig.shape[1])
         vectors = np.repeat(
             vectors_orig[None, (i*n):((i+1)*n)], n_v, axis=0).reshape(-1, 3)
-
+        print(vectors.shape)
+        print(SH.shape)
         dots = (vectors * normals).sum(1)
         front = (dots > 0.0)
 
@@ -132,6 +133,8 @@ def computePRT(mesh_path, n, order):
             PRT_all += (PRT.reshape(-1, n, SH.shape[1]).sum(1))
         else:
             PRT_all = (PRT.reshape(-1, n, SH.shape[1]).sum(1))
+        print(PRT_all.shape)
+            
 
     PRT = w * PRT_all
 
@@ -154,7 +157,7 @@ def testPRT(dir_path, n=40):
 
 
 # 在这里指定模型的路径，如：D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/
-data_pathes='D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/'
+data_pathes='D:\\workspace\\SRTP\data\\THuman2.0_new\\0000\\0000'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
