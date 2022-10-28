@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from lib.data.TrainDataset import TrainDataset
+from lib.data.RelightDataset import RelightDataset
 from lib.model.BodyRelightNet import BodyRelightNet
 from lib.model.Conv import *
 from lib.model.loss_util import loss
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    train_dataset = TrainDataset(opt, 'train')
+    train_dataset = RelightDataset(opt, 'train')
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     # loss

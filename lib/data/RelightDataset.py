@@ -4,14 +4,14 @@ import os
 import cv2
 import torch
 
-class TrainDataset(Dataset):
+class RelightDataset(Dataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def __init__(self, opt, phase='train'):
+    def __init__(self, opt, phase='train', projection_mode='orthogonal'):
         self.opt = opt
-        self.projection_mode = 'orthogonal'
+        self.projection_mode = projection_mode
 
         # Path setup
         self.data_root = self.opt.dataroot
@@ -20,6 +20,7 @@ class TrainDataset(Dataset):
         self.PARAM = os.path.join(self.metadata_root, 'PARAM')
 
         self.is_train = (phase == 'train')
+        self.is_eval = (phase == 'eval')
         self.load_size = self.opt.loadSize
 
         self.subjects = self.get_subjects()
@@ -27,18 +28,22 @@ class TrainDataset(Dataset):
 
     def get_subjects(self):
         """
-        Get the all the training image files' names
+        Get the all the train/eval image files' names
         """
         all_subjects = os.listdir(self.data_root)
 
         var_subjects = np.loadtxt(os.path.join(self.metadata_root, 'val.txt'), dtype=str) # 测试用的数据集
-        if len(var_subjects) == 0:
+        if len(var_subjects) == 0 and not self.is_eval:
             return all_subjects
+        elif len(var_subjects) == 0 and self.is_eval:
+            raise RuntimeError('No eval dataset')
 
         if self.is_train:
             return sorted(list(set(all_subjects) - set(var_subjects)))
-        else:
+        elif self.is_eval:
             return sorted(list(var_subjects))
+        else:
+            raise RuntimeError('Unexpected phase')
 
     def get_lights(self):
         return os.listdir(self.LIGHT)
