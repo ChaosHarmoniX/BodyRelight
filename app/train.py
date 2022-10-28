@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 import json
-from ..lib.options import *
+from lib.options import *
 from tqdm import tqdm
 
 # lr = 0.0002
@@ -95,5 +95,5 @@ if __name__ == '__main__':
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     # loss
-    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, momentum=0, weight_decay=0)
+    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, weight_decay=0)
     train(net, train_dataloader, loss, opt.num_epoch, optimizer)

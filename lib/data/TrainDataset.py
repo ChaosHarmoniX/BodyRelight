@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import numpy as np
 import os
 import cv2
+import torch
 
 class TrainDataset(Dataset):
     @staticmethod
@@ -13,13 +14,10 @@ class TrainDataset(Dataset):
         self.projection_mode = 'orthogonal'
 
         # Path setup
-        self.root = self.opt.dataroot
-        self.IMAGE = os.path.join(self.root, 'IMAGE')
-        self.LIGHT = os.path.join(self.root, 'LIGHT')
-        self.MASK = os.path.join(self.root, 'MASK')
-        self.PARAM = os.path.join(self.root, 'PARAM')
-        self.ALBEDO = os.path.join(self.root, 'ALBEDO')
-        self.TRANSPORT = os.path.join(self.root, 'TRANSPORT')
+        self.data_root = self.opt.dataroot
+        self.metadata_root = os.path.join(self.opt.dataroot, '..', 'datas')
+        self.LIGHT = os.path.join(self.metadata_root, 'sh')
+        self.PARAM = os.path.join(self.metadata_root, 'PARAM')
 
         self.is_train = (phase == 'train')
         self.load_size = self.opt.loadSize
@@ -31,9 +29,9 @@ class TrainDataset(Dataset):
         """
         Get the all the training image files' names
         """
-        all_subjects = os.listdir(self.IMAGE)
+        all_subjects = os.listdir(self.data_root)
 
-        var_subjects = np.loadtxt(os.path.join(self.root, 'val.txt'), dtype=str) # 测试用的数据集
+        var_subjects = np.loadtxt(os.path.join(self.metadata_root, 'val.txt'), dtype=str) # 测试用的数据集
         if len(var_subjects) == 0:
             return all_subjects
 
@@ -57,11 +55,11 @@ class TrainDataset(Dataset):
         subject = self.subjects[subject_id]
 
         # Set up file path
-        image_path = os.path.join(self.IMAGE, subject, '%03d.jpg' % (light_id))
-        mask_path = os.path.join(self.MASK, '%03d.png' % (subject_id)) # for obj in different lights, the mask remains the same
-        albedo_path = os.path.join(self.ALBEDO, subject, '%03d.jpg' % (light_id))
+        image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', '%04d.jpg' % (light_id))
+        mask_path = os.path.join(self.data_root, '%04d' % (subject_id), 'MASK', '%04d.png' % (subject_id))
+        albedo_path = os.path.join(self.data_root, '%04d' % (subject_id), 'ALBEDO', '%04d.jpg' % (subject_id))
         light_path = os.path.join(self.LIGHT, str(self.lights[light_id]))
-        transport_path = os.path.join(self.TRANSPORT, subject, '%03d.npy' % (light_id))
+        transport_dir = os.path.join(self.data_root, '%04d' % (subject_id), 'TRANSPORT', '%04d' % (light_id))
 
         # --------- Read groundtruth file data ------------
         # mask
@@ -87,14 +85,21 @@ class TrainDataset(Dataset):
             for j in range(albedo.shape[1]):
                 if not mask[i][j]:
                     albedo[i][j] = [0, 0, 0]
-
         # light
         # [9, 3] SH coefficient
         light = np.load(light_path) # TODO: 进一步cvt
 
         # transport
         # [H, W, 9]
-        transport = np.load(transport_path) # TODO: 进一步cvt
+        transport = []
+        for i in range(9):
+            transport_path = os.path.join(transport_dir, '%01d.png' % (i))
+            tmp = cv2.imread(transport_path,)[:, :, 0:1] # TODO: 进一步cvt
+            if len(transport) == 0:
+                transport = tmp
+            else:
+                transport = np.concatenate((transport, tmp), axis= 2)
+
         for i in range(transport.shape[0]): # mask transport
             for j in range(transport.shape[1]):
                 if not mask[i][j]:

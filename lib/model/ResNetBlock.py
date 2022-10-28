@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from Conv import *
+from lib.model.Conv import *
 
 class ResNetBlock(nn.Module):
     def __init__(self):
