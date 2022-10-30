@@ -47,6 +47,8 @@ from lib.renderer.gl.scrender import scRender
 import app.prt_util
 from app.prt_util import testPRT
 from app.albedo_map import render_sc
+from app.transfer_map import render_transfer_map
+from app.render_data import render_prt_ortho
 
 data_root_PATH=ROOT_PATH+'/data'
 raw_data_path="D:/workspace/SRTP/data/THuman2.0_new/"
@@ -85,10 +87,21 @@ def gen_all_datasset():
             print("Calculating PRT...")
             testPRT(obj_src_path)
             print("Done")
-        print("PRT file exist")
-        rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-        # generate ALBEDO
-        render_sc(obj_root_path, obj_src_path, folder_of_raw, rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
+        else:
+            print("PRT file exist")
+        # # generate ALBEDO
+        # albedo_rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+        # render_sc(obj_root_path, obj_src_path, folder_of_raw, albedo_rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
+        # # generate TRANSFORM
+        # rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+        # render_transfer_map(obj_root_path, obj_src_path, folder_of_raw, shs, rndr, arg_size, 1, 9, pitch=[0])
+        # # generate IMAGE
+        # render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw,
+        #              shs, rndr,  arg_size,  pitch=[0])
+
+             
+        
+        
         
         
         

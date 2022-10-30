@@ -106,8 +106,8 @@ def render_sc(out_path, folder_name, subject_name,  rndr:PRTRender , im_size, an
     # os.makedirs(os.path.join(out_path, 'GEO',
     #             'OBJ', subject_name), exist_ok=True)
     # os.makedirs(os.path.join(out_path, 'PARAM', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'ALBEDO', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'MASK', subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'ALBEDO'), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'MASK'), exist_ok=True)
 
 
     for p in pitch:
@@ -119,28 +119,16 @@ def render_sc(out_path, folder_name, subject_name,  rndr:PRTRender , im_size, an
 
             rndr.rot_matrix = R
             rndr.set_camera(cam)
+            # dic = {'ortho_ratio': cam.ortho_ratio,
+            #        'scale': y_scale, 'center': vmed, 'R': R}
 
-            for j in range(n_light):
+            rndr.display()
 
-                # dic = {'ortho_ratio': cam.ortho_ratio,
-                #        'scale': y_scale, 'center': vmed, 'R': R}
-
-                rndr.display()
-
-                out_all_f = rndr.get_color(0)
-                out_mask = out_all_f[:, :, 3]
-                out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
-
-                # np.save(os.path.join(out_path, 'PARAM', subject_name,
-                #         '%d_%d_%02d.npy' % (y, p, j)), dic)
-                # cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
-                #             '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
-                # cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
-                #             '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
-                cv2.imwrite(os.path.join(out_path, 'ALBEDO',
-                            'ALBEDO.jpg' ), 255.0*out_all_f)
-                cv2.imwrite(os.path.join(out_path, 'MASK',
-                            'MASK.png'), 255.0*out_mask)
+            out_all_f = rndr.get_color(0)
+            out_mask = out_all_f[:, :, 3]
+            out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
+            cv2.imwrite(os.path.join(out_path,'ALBEDO','ALBEDO.jpg' ), 255.0*out_all_f)
+            cv2.imwrite(os.path.join(out_path,'MASK','MASK.png'), 255.0*out_mask)
             break
 
                 

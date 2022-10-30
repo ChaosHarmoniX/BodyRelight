@@ -180,7 +180,8 @@ def rotateBand2(x, R):
     return dst
 
 
-def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, rndr_uv:PRTRender, im_size, angl_step=4, n_light=1, pitch=[0]):
+# def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, rndr_uv:PRTRender, im_size, angl_step=360, n_light=240, pitch=[0]):
+def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, im_size, angl_step=360, n_light=240, pitch=[0]):
     cam = Camera(width=im_size, height=im_size)
     cam.ortho_ratio = 0.4 * (512 / im_size)
     cam.near = -100
@@ -219,7 +220,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
     y_scale = 180/(vmax[up_axis] - vmin[up_axis])
 
     rndr.set_norm_mat(y_scale, vmed)
-    rndr_uv.set_norm_mat(y_scale, vmed)
+    # rndr_uv.set_norm_mat(y_scale, vmed)
 
     tan, bitan = compute_tangent(
         vertices, faces, normals, textures, face_textures)
@@ -229,31 +230,31 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
                   textures, face_textures, prt, face_prt, tan, bitan)
     rndr.set_albedo(texture_image)
 
-    rndr_uv.set_mesh(vertices, faces, normals, faces_normals,
-                     textures, face_textures, prt, face_prt, tan, bitan)
-    rndr_uv.set_albedo(texture_image)
+    # rndr_uv.set_mesh(vertices, faces, normals, faces_normals,
+    #                  textures, face_textures, prt, face_prt, tan, bitan)
+    # rndr_uv.set_albedo(texture_image)
 
-    os.makedirs(os.path.join(out_path, 'GEO',
-                'OBJ', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'PARAM', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'RENDER', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'MASK', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'UV_RENDER',
-                subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'UV_MASK', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'UV_POS', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'UV_NORMAL',
-                subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'GEO',
+    #             'OBJ', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'PARAM', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'RENDER', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'MASK', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'UV_RENDER',
+    #             subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'UV_MASK', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'UV_POS', subject_name), exist_ok=True)
+    # os.makedirs(os.path.join(out_path, 'UV_NORMAL',
+                # subject_name), exist_ok=True)
 
-    if not os.path.exists(os.path.join(out_path, 'val.txt')):
-        f = open(os.path.join(out_path, 'val.txt'), 'w')
-        f.close()
+    # if not os.path.exists(os.path.join(out_path, 'val.txt')):
+    #     f = open(os.path.join(out_path, 'val.txt'), 'w')
+    #     f.close()
 
     # copy obj file
-    cmd = 'cp %s %s' % (mesh_file, os.path.join(
-        out_path, 'GEO', 'OBJ', subject_name))
-    print(cmd)
-    os.system(cmd)
+    # cmd = 'cp %s %s' % (mesh_file, os.path.join(
+    #     out_path, 'GEO', 'OBJ', subject_name))
+    # os.system(cmd)
+    rndr.sc_setAlbedo=True
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
@@ -263,12 +264,14 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
                 R = np.matmul(R, make_rotate(math.radians(90), 0, 0))
 
             rndr.rot_matrix = R
-            rndr_uv.rot_matrix = R
+            # rndr_uv.rot_matrix = R
             rndr.set_camera(cam)
-            rndr_uv.set_camera(cam)
+            # rndr_uv.set_camera(cam)
 
             for j in range(n_light):
-                sh_id = random.randint(0, shs.shape[0]-1)
+                # sh_id = random.randint(0, shs.shape[0]-1)
+                # Change
+                sh_id = j
                 sh = shs[sh_id]
                 sh_angle = 0.2*np.pi*(random.random()-0.5)
                 sh = rotateSH(sh, make_rotate(0, sh_angle, 0).T)
@@ -285,38 +288,40 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
                 out_mask = out_all_f[:, :, 3]
                 out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
 
-                np.save(os.path.join(out_path, 'PARAM', subject_name,
-                        '%d_%d_%02d.npy' % (y, p, j)), dic)
-                cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
-                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
-                cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
-                            '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
+                # np.save(os.path.join(out_path, 'PARAM', subject_name,
+                #         '%d_%d_%02d.npy' % (y, p, j)), dic)
+                # cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
+                #             '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
+                # cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
+                #             '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
+                
+                cv2.imwrite(os.path.join(out_path, 'IMAGE', 'IMAGE.jpg'), 255.0*out_all_f)
+                
+                # rndr_uv.set_sh(sh)
+                # rndr_uv.analytic = False
+                # rndr_uv.use_inverse_depth = False
+                # rndr_uv.display()
 
-                rndr_uv.set_sh(sh)
-                rndr_uv.analytic = False
-                rndr_uv.use_inverse_depth = False
-                rndr_uv.display()
+                # uv_color = rndr_uv.get_color(0)
+                # uv_color = cv2.cvtColor(uv_color, cv2.COLOR_RGBA2BGR)
+                # cv2.imwrite(os.path.join(out_path, 'UV_RENDER', subject_name,
+                #             '%d_%d_%02d.jpg' % (y, p, j)), 255.0*uv_color)
 
-                uv_color = rndr_uv.get_color(0)
-                uv_color = cv2.cvtColor(uv_color, cv2.COLOR_RGBA2BGR)
-                cv2.imwrite(os.path.join(out_path, 'UV_RENDER', subject_name,
-                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*uv_color)
+                # if y == 0 and j == 0 and p == pitch[0]:
+                #     uv_pos = rndr_uv.get_color(1)
+                #     uv_mask = uv_pos[:, :, 3]
+                #     cv2.imwrite(os.path.join(out_path, 'UV_MASK',
+                #                 subject_name, '00.png'), 255.0*uv_mask)
 
-                if y == 0 and j == 0 and p == pitch[0]:
-                    uv_pos = rndr_uv.get_color(1)
-                    uv_mask = uv_pos[:, :, 3]
-                    cv2.imwrite(os.path.join(out_path, 'UV_MASK',
-                                subject_name, '00.png'), 255.0*uv_mask)
+                #     # default is a reserved name
+                #     data = {'default': uv_pos[:, :, :3]}
+                #     pyexr.write(os.path.join(out_path, 'UV_POS',
+                #                 subject_name, '00.exr'), data)
 
-                    # default is a reserved name
-                    data = {'default': uv_pos[:, :, :3]}
-                    pyexr.write(os.path.join(out_path, 'UV_POS',
-                                subject_name, '00.exr'), data)
-
-                    uv_nml = rndr_uv.get_color(2)
-                    uv_nml = cv2.cvtColor(uv_nml, cv2.COLOR_RGBA2BGR)
-                    cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
-                                subject_name, '00.png'), 255.0*uv_nml)
+                #     uv_nml = rndr_uv.get_color(2)
+                #     uv_nml = cv2.cvtColor(uv_nml, cv2.COLOR_RGBA2BGR)
+                #     cv2.imwrite(os.path.join(out_path, 'UV_NORMAL',
+                                # subject_name, '00.png'), 255.0*uv_nml)
 
 
     
