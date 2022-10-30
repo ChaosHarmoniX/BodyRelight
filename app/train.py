@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from lib.data.TrainDataset import TrainDataset
+from lib.data.RelightDataset import RelightDataset
 from lib.model.BodyRelightNet import BodyRelightNet
 from lib.model.Conv import *
 from lib.model.loss_util import loss
@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 import json
-from ..lib.options import *
+from lib.options import *
 from tqdm import tqdm
 
 # lr = 0.0002
@@ -72,10 +72,14 @@ def train_epoch(net, train_dataloader, loss, updater):
         light_gt = train_data['light']
         transport_gt = train_data['transport']
 
-        masked_image = image * mask
-        albedo_hat, light_hat, transport_hat = net(masked_image)
-        image_hat = albedo_hat * (transport_hat * light_hat)
-        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, masked_image)
+        albedo_hat, light_hat, transport_hat = net(image)
+        for i in range(albedo_hat.shape[0]): # mask the output
+            if not mask[i]:
+                albedo_hat[i] = [0, 0, 0]
+                transport_hat[i] = [0] * 9
+        
+        image_hat = albedo_hat * (transport_hat @ light_hat)
+        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image)
         updater.zero_grad()
         l.backward()
         updater.step()
@@ -87,9 +91,9 @@ if __name__ == '__main__':
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    train_dataset = TrainDataset(opt, 'train')
+    train_dataset = RelightDataset(opt, 'train')
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     # loss
-    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, momentum=0, weight_decay=0)
+    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, weight_decay=0)
     train(net, train_dataloader, loss, opt.num_epoch, optimizer)

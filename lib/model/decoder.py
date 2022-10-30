@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from Conv import *
+from lib.model.Conv import *
 from .ResNetBlock import ResNetBlock
 
 class Decoder(nn.Module):

@@ -10,10 +10,10 @@ def tv_loss(y_hat):
 
 def loss(albedo_hat, light_hat, transport_hat, image_hat, albedo, light, transport, image):
     # image = albedo * (transport * light)
-    shading = transport * light
-    tranhxlight = transport_hat * light
-    tranxlighth = transport * light_hat
-    tranhxlighth = transport_hat * light_hat
+    shading = transport @ light
+    tranhxlight = transport_hat @ light
+    tranxlighth = transport @ light_hat
+    tranhxlighth = transport_hat @ light_hat
 
     sfs_losses = L1_loss(albedo, albedo_hat) + L1_loss(light, light_hat) + \
                 L1_loss(transport, transport_hat) + L1_loss(image, image_hat)
