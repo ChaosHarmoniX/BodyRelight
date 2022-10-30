@@ -11,3 +11,7 @@ clean:
 md: # make data
 	-make clean
 	python ./app/render_data.py
+
+gen:
+	-make clean
+	-python ./app/gen_data.py

@@ -20,6 +20,7 @@ D:.
 ### PRT:
 You should install the conda package "pyembree", which is not support for windows using conda.
 For windows, plz reference to [this](https://github.com/scopatz/pyembree/issues/14).
+OR USE PIP INSTALL AT THE LAST STEP
 ### PYEXR:
 You can reference [this](https://blog.csdn.net/lyw19990827/article/details/123666758).
 Or directly:
