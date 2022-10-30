@@ -8,6 +8,7 @@
 
 
 
+from genericpath import exists
 from re import sub
 import sys
 import os
@@ -71,13 +72,13 @@ def gen_all_datasset():
     for folder_of_raw in data_folders:
         # folder_of_raw='0001'
         print("Processing: "+folder_of_raw)
-        os.mkdir(os.path.join(data_root_PATH,folder_of_raw))
+        os.makedirs(os.path.join(data_root_PATH,folder_of_raw),exist_ok=True)
         obj_root_path=os.path.join(data_root_PATH,folder_of_raw)# data folder
         obj_src_path=os.path.join(raw_data_path,folder_of_raw)# obj file path
         # create folder in obj_root_path
-        os.mkdir(os.path.join(obj_root_path,'ALBEDO'))
-        os.mkdir(os.path.join(obj_root_path,'TRANSFORM'))
-        os.mkdir(os.path.join(obj_root_path,'IMAGE'))
+        os.makedirs(os.path.join(obj_root_path,'ALBEDO'),exist_ok=True)
+        os.makedirs(os.path.join(obj_root_path,'TRANSFORM'),exist_ok=True)
+        os.makedirs(os.path.join(obj_root_path,'IMAGE'),exist_ok=True)
         # calculate the PRT
         # check if the bounce file exists
         if(not os.path.exists(os.path.join(obj_src_path,'bounce/face.npy'))):
