@@ -180,7 +180,7 @@ def rotateBand2(x, R):
     return dst
 
 
-def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, rndr_uv:PRTRender, im_size, angl_step=4, n_light=9, pitch=[0]):
+def render_transfer_map(out_path, folder_name, subject_name, shs, rndr:PRTRender, im_size, angl_step=4, n_light=9, pitch=[0]):
     cam = Camera(width=im_size, height=im_size)
     cam.ortho_ratio = 0.4 * (512 / im_size)
     cam.near = -100
@@ -219,7 +219,6 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
     y_scale = 180/(vmax[up_axis] - vmin[up_axis])
 
     rndr.set_norm_mat(y_scale, vmed)
-    rndr_uv.set_norm_mat(y_scale, vmed)
 
     tan, bitan = compute_tangent(
         vertices, faces, normals, textures, face_textures)
@@ -231,25 +230,22 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
     rndr.sc_setAlbedo=False
 
 
-    os.makedirs(os.path.join(out_path, 'GEO',
-                'OBJ', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'PARAM', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'RENDER', subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, 'MASK', subject_name), exist_ok=True)
+    
+    os.makedirs(os.path.join(out_path, 'TRANSFORM'), exist_ok=True)
+    os.makedirs(os.path.join(out_path, 'MASK'), exist_ok=True)
 
 
     if not os.path.exists(os.path.join(out_path, 'val.txt')):
         f = open(os.path.join(out_path, 'val.txt'), 'w')
         f.close()
 
-    # copy obj file
-    cmd = 'cp %s %s' % (mesh_file, os.path.join(
-        out_path, 'GEO', 'OBJ', subject_name))
-    print(cmd)
-    os.system(cmd)
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
+            
+            # 
+            y=0
+            #
             R = np.matmul(make_rotate(math.radians(p), 0, 0),
                           make_rotate(0, math.radians(y), 0))
             if up_axis == 2:
@@ -259,8 +255,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
             rndr.set_camera(cam)
 
             for j in range(n_light):
-                sh_id = j
-                sh = shs[sh_id]
+                sh = shs[0]
                 sh=np.zeros(sh.shape)
                 sh[j]+=1.0 # 9种球谐，依次系数为1.0
                 # sh+=1
@@ -278,13 +273,8 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, r
                 out_all_f = rndr.get_color(0)
                 out_mask = out_all_f[:, :, 3]
                 out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
-
-                np.save(os.path.join(out_path, 'PARAM', subject_name,
-                        '%d_%d_%02d.npy' % (y, p, j)), dic)
-                cv2.imwrite(os.path.join(out_path, 'RENDER', subject_name,
-                            '%d_%d_%02d.jpg' % (y, p, j)), 255.0*out_all_f)
-                cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
-                            '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
+                cv2.imwrite(os.path.join(out_path, 'TRANSFROM', '%d.jpg' % (j)), 255.0*out_all_f)
+            break
 
 
 
@@ -298,7 +288,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', type=str,
                         default=dataset_path)
     parser.add_argument('-o', '--out_dir', type=str,
-                        default='./data')
+                        default='./dataaa')
     parser.add_argument('-m', '--ms_rate', type=int, default=1,
                         help='higher ms rate results in less aliased output. MESA renderer only supports ms_rate=1.')
     parser.add_argument('-e', '--egl',  action='store_true',
@@ -314,8 +304,6 @@ if __name__ == '__main__':
     from lib.renderer.gl.prt_render import PRTRender
     rndr = PRTRender(width=args.size, height=args.size,
                      ms_rate=args.ms_rate, egl=args.egl)
-    rndr_uv = PRTRender(width=args.size, height=args.size,
-                        uv_mode=True, egl=args.egl)
     
     
     if args.input[-1] == '/':
@@ -326,5 +314,5 @@ if __name__ == '__main__':
     print(subject_name)
     # render_prt_ortho(args.out_dir, args.input, subject_name,
     #                  shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
-    render_prt_ortho(args.out_dir, args.input, subject_name,
-                     shs, rndr, rndr_uv, args.size, 1, 9, pitch=[0])
+    render_transfer_map(args.out_dir, args.input, subject_name,
+                     shs, rndr, args.size, 1, 9, pitch=[0])

@@ -118,8 +118,7 @@ def computePRT(mesh_path, n, order):
                        n_v, axis=0).reshape(-1, SH_orig.shape[1])
         vectors = np.repeat(
             vectors_orig[None, (i*n):((i+1)*n)], n_v, axis=0).reshape(-1, 3)
-        print(vectors.shape)
-        print(SH.shape)
+
         dots = (vectors * normals).sum(1)
         front = (dots > 0.0)
 
@@ -133,7 +132,6 @@ def computePRT(mesh_path, n, order):
             PRT_all += (PRT.reshape(-1, n, SH.shape[1]).sum(1))
         else:
             PRT_all = (PRT.reshape(-1, n, SH.shape[1]).sum(1))
-        print(PRT_all.shape)
             
 
     PRT = w * PRT_all
@@ -144,10 +142,16 @@ def computePRT(mesh_path, n, order):
 
 
 def testPRT(dir_path, n=40):
+    
     if dir_path[-1] == '/':
         dir_path = dir_path[:-1]
     sub_name = dir_path.split('/')[-1]
     obj_path = os.path.join(dir_path, sub_name + '.obj')
+    
+    print(os.path.join(dir_path, 'bounce',
+               'bounce0.txt'))
+    
+    
     os.makedirs(os.path.join(dir_path, 'bounce'), exist_ok=True)
 
     PRT, F = computePRT(obj_path, n, 2)
@@ -157,9 +161,9 @@ def testPRT(dir_path, n=40):
 
 
 # 在这里指定模型的路径，如：D:/Computer Programing/SRTP/datas/THuman2.0_new/0000/
-data_pathes='D:\\workspace\\SRTP\data\\THuman2.0_new\\0000\\0000'
 
 if __name__ == '__main__':
+    data_pathes='D:\\workspace\\SRTP\data\\THuman2.0_new\\0000\\0000'
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str,
                         default=data_pathes)
