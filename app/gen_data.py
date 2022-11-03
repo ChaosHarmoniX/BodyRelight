@@ -89,15 +89,30 @@ def gen_all_datasset():
             print("Done")
         else:
             print("PRT file exist")
+            
         # generate ALBEDO
-        albedo_rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-        render_sc(obj_root_path, obj_src_path, folder_of_raw, albedo_rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
+        if(not os.path.exists(os.path.join(obj_root_path,'ALBEDO','ALBEDO.jpg'))):
+            print("ALBEDO NOT FOUND")
+            albedo_rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+            render_sc(obj_root_path, obj_src_path, folder_of_raw, albedo_rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
+        else:
+            print("ALBEDO file exist")
         # generate TRANSFORM
-        rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-        render_transfer_map(obj_root_path, obj_src_path, folder_of_raw, shs, rndr, arg_size, 1, 9, pitch=[0])
+        if(not os.path.exists(os.path.join(obj_root_path,'TRANSFORM','8.jpg'))):
+            print("TRANSFORM NOT FOUND")
+            rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+            render_transfer_map(obj_root_path, obj_src_path, folder_of_raw, shs, rndr, arg_size, 1, 9, pitch=[0])
+        else:
+            print("TRANSFORM file exist")
         # generate IMAGE
-        render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw,
-                     shs, rndr,  arg_size,  pitch=[0])
+        if(not os.path.exists(os.path.join(obj_root_path,'IMAGE','IMAGE.jpg'))):
+            print("IMAGE NOT FOUND")
+            rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+            render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw, shs, rndr,  arg_size,  pitch=[0])
+        else:
+            print("IMAGE file exist")
+              
+            
 
              
         
