@@ -9,7 +9,6 @@ from GPUtil import showUtilization as gpu_usage
 class MultiConv(nn.Module):
     image_size = 512
     def __init__(self, filter_channels, is_transpose = False, kernel_size = 4, stride = 2, padding_mode='same'):
-         # 卷积核论文中没有提到大小，4的话太大了，在ResNetBlock就没法继续卷积了
         super(MultiConv, self).__init__()
         self.filters = []
         self.batch_norms = []
