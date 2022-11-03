@@ -12,11 +12,10 @@ class ResNetBlock(nn.Module):
         self.conv_block = MultiConv([512, 512, 512]) # input is 512
     
     def forward(self, x):
-        print(f'{__file__}:{sys._getframe().f_lineno}: {x.shape}')
-        tmp = self.conv_block(x)
-        print(f'{__file__}:{sys._getframe().f_lineno}: {tmp.shape}')
+        # print(f'{__file__}:{sys._getframe().f_lineno}: {x.shape}')
+        # print(f'{__file__}:{sys._getframe().f_lineno}: {tmp.shape}')
         # relu
-        return x + tmp
+        return x + self.conv_block(x)
         # print(x.shape) # [512, 2, 3]
         # print(self.conv_block(x).shape) # [512, 6, 6]
         # return x + self.conv_block(x)

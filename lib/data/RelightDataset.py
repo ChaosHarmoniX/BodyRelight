@@ -9,7 +9,7 @@ class RelightDataset(Dataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def __init__(self, opt, device, phase='train', projection_mode='orthogonal'):
+    def __init__(self, opt, phase='train', projection_mode='orthogonal'):
         self.opt = opt
         self.projection_mode = projection_mode
 
@@ -25,7 +25,6 @@ class RelightDataset(Dataset):
 
         self.subjects = self.get_subjects()
         self.lights = self.get_lights()
-        self.device = device
 
     def get_subjects(self):
         """
@@ -113,11 +112,11 @@ class RelightDataset(Dataset):
 
         # flatten
         # image = torch.Tensor(image.reshape((64, -1, 3)))
-        image = torch.Tensor(image).T.to(self.device)
-        mask = torch.Tensor(mask.reshape((-1))).T.to(self.device)
-        albedo = torch.Tensor(albedo.reshape((-1, 3))).T.to(self.device)
-        light = torch.Tensor(light).T.to(self.device)
-        transport = torch.Tensor(transport.reshape((-1, 9))).T.to(self.device)
+        image = torch.Tensor(image).T
+        mask = torch.Tensor(mask.reshape((-1))).T
+        albedo = torch.Tensor(albedo.reshape((-1, 3))).T
+        light = torch.Tensor(light).T
+        transport = torch.Tensor(transport.reshape((-1, 9))).T
 
         res = {
             'name': subject,

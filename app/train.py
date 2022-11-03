@@ -1,4 +1,5 @@
 import sys
+from GPUtil import showUtilization as gpu_usage
 import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -21,7 +22,7 @@ from tqdm import tqdm
 # get options
 opt = BaseOptions().parse() # 一些配置，比如batch_size、线程数
 
-def train(net, train_loader, loss, num_epochs, updater):
+def train(net, train_loader, loss, num_epochs, updater, device):
     """
     :param net:
     :param train_iter: 训练数据集迭代器
@@ -56,23 +57,31 @@ def train(net, train_loader, loss, num_epochs, updater):
     # training
     start_epoch = 0 if not opt.continue_train else max(opt.resume_epoch,0)
     for epoch in tqdm(range(start_epoch, opt.num_epoch)):
-        train_epoch(net, train_loader, loss, updater)
+        train_epoch(net, train_loader, loss, updater, device)
     
     print("End training...")
 
 
 """ 训练"""
-def train_epoch(net, train_dataloader, loss, updater):
+def train_epoch(net, train_dataloader, loss, updater, device):
     net.train() # 设为训练模式
     
     for train_data in train_dataloader:
-        image = train_data['image']
-        mask = train_data['mask']
-        albedo_gt = train_data['albedo']
-        light_gt = train_data['light']
-        transport_gt = train_data['transport']
+        print(f'{__file__}:{sys._getframe().f_lineno}: initial gpu')
+        gpu_usage()
+
+        image = train_data['image'].to(device)
+        mask = train_data['mask'].to(device)
+        albedo_gt = train_data['albedo'].to(device)
+        light_gt = train_data['light'].to(device)
+        transport_gt = train_data['transport'].to(device)
+
+        print(f'{__file__}:{sys._getframe().f_lineno}: data load gpu')
+        gpu_usage()
 
         albedo_hat, light_hat, transport_hat = net(image)
+        print(f'{__file__}:{sys._getframe().f_lineno}: forward gpu')
+        gpu_usage()
         for i in range(albedo_hat.shape[0]): # mask the output
             if not mask[i]:
                 albedo_hat[i] = [0, 0, 0]
@@ -90,10 +99,9 @@ if __name__ == '__main__':
     # set cuda
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
-    
-    train_dataset = RelightDataset(opt, cuda, 'train')
+    train_dataset = RelightDataset(opt, 'train')
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     # loss
     optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, weight_decay=0)
-    train(net, train_dataloader, loss, opt.num_epoch, optimizer)
+    train(net, train_dataloader, loss, opt.num_epoch, optimizer, cuda)
