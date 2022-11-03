@@ -89,15 +89,15 @@ def gen_all_datasset():
             print("Done")
         else:
             print("PRT file exist")
-        # # generate ALBEDO
-        # albedo_rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-        # render_sc(obj_root_path, obj_src_path, folder_of_raw, albedo_rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
-        # # generate TRANSFORM
-        # rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-        # render_transfer_map(obj_root_path, obj_src_path, folder_of_raw, shs, rndr, arg_size, 1, 9, pitch=[0])
-        # # generate IMAGE
-        # render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw,
-        #              shs, rndr,  arg_size,  pitch=[0])
+        # generate ALBEDO
+        albedo_rndr=scRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+        render_sc(obj_root_path, obj_src_path, folder_of_raw, albedo_rndr, arg_size, arg_ms_rate, arg_egl, pitch=[0])
+        # generate TRANSFORM
+        rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
+        render_transfer_map(obj_root_path, obj_src_path, folder_of_raw, shs, rndr, arg_size, 1, 9, pitch=[0])
+        # generate IMAGE
+        render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw,
+                     shs, rndr,  arg_size,  pitch=[0])
 
              
         
