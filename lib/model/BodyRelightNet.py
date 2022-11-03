@@ -10,10 +10,10 @@ class BodyRelightNet(nn.Module):
         super(BodyRelightNet, self).__init__()
 
         self.opt = opt
-        self.encoder = MultiConv(filter_channels=[64, 128, 256, 512, 512, 512])
+        self.encoder = MultiConv(filter_channels=[3, 64, 128, 256, 512, 512, 512])
 
-        self.albedo_decoder = Decoder()
-        self.transport_decoder = Decoder()
+        self.albedo_decoder = Decoder(3)
+        self.transport_decoder = Decoder(9)
         self.light_decoder = MultiConv(filter_channels=[]) # TODO: 四层卷积，但文章中没有说具体的，只知道最终输出为27维
     
     def forward(self, x):

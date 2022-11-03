@@ -91,7 +91,7 @@ if __name__ == '__main__':
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    train_dataset = RelightDataset(opt, 'train')
+    train_dataset = RelightDataset(opt, cuda, 'train')
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     # loss
