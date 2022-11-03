@@ -273,7 +273,7 @@ def render_transfer_map(out_path, folder_name, subject_name, shs, rndr:PRTRender
                 out_all_f = rndr.get_color(0)
                 out_mask = out_all_f[:, :, 3]
                 out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
-                cv2.imwrite(os.path.join(out_path, 'TRANSFROM', '%d.jpg' % (j)), 255.0*out_all_f)
+                cv2.imwrite(os.path.join(out_path, 'TRANSFORM', '%d.jpg' % (j)), 255.0*out_all_f)
             break
 
 

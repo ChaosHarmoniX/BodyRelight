@@ -60,11 +60,11 @@ class RelightDataset(Dataset):
         subject = self.subjects[subject_id]
 
         # Set up file path
-        image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', '%04d.jpg' % (light_id))
-        mask_path = os.path.join(self.data_root, '%04d' % (subject_id), 'MASK', '%04d.png' % (subject_id))
-        albedo_path = os.path.join(self.data_root, '%04d' % (subject_id), 'ALBEDO', '%04d.jpg' % (subject_id))
+        image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', 'IMAGE.jpg')
+        mask_path = os.path.join(self.data_root, '%04d' % (subject_id), 'MASK', 'MASK.png')
+        albedo_path = os.path.join(self.data_root, '%04d' % (subject_id), 'ALBEDO', 'ALBEDO.jpg')
         light_path = os.path.join(self.LIGHT, str(self.lights[light_id]))
-        transport_dir = os.path.join(self.data_root, '%04d' % (subject_id), 'TRANSPORT', '%04d' % (light_id))
+        transport_dir = os.path.join(self.data_root, '%04d' % (subject_id), 'TRANSFORM')
 
         # --------- Read groundtruth file data ------------
         # mask
@@ -98,7 +98,7 @@ class RelightDataset(Dataset):
         # [H, W, 9]
         transport = []
         for i in range(9):
-            transport_path = os.path.join(transport_dir, '%01d.png' % (i))
+            transport_path = os.path.join(transport_dir, '%01d.jpg' % (i))
             tmp = cv2.imread(transport_path,)[:, :, 0:1] # TODO: 进一步cvt
             if len(transport) == 0:
                 transport = tmp
