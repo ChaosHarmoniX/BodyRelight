@@ -23,7 +23,7 @@ class Decoder(nn.Module):
         # print(self.deconv(res_result).shape) # [3, 126, 126]
         # print('all')
         res_result = self.res_net(x)
-        return res_result, x + self.deconv(res_result) # TODO: 此处可能有误，是根据ResNet的skip connection推测的
-        # return self.deconv(x + self.res_net(x)) # TODO: 也可能不是+而是concat
+        # return res_result, x + self.deconv(res_result) # TODO: 此处可能有误，是根据ResNet的skip connection推测的
+        return res_result, self.deconv(x + self.res_net(x)) # TODO: 也可能不是+而是concat
         
     # def forward(self, x):

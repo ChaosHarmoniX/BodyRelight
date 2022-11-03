@@ -87,7 +87,8 @@ def train_epoch(net, train_dataloader, loss, updater, device):
                 albedo_hat[i] = [0, 0, 0]
                 transport_hat[i] = [0] * 9
         
-        image_hat = albedo_hat * (transport_hat @ light_hat)
+        image_hat = albedo_hat * (light_hat @ transport_hat) # 因为channel在第0维，所以倒一下light和transport
+        # image_hat = albedo_hat * (transport_hat @ light_hat)
         l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image)
         updater.zero_grad()
         l.backward()
