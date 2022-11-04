@@ -4,8 +4,6 @@ import os
 import cv2
 import torch
 
-# TODO: delete
-import sys
 class RelightDataset(Dataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -61,7 +59,6 @@ class RelightDataset(Dataset):
         light_id = index % self.lights.shape[0]
         subject_id = index // self.lights.shape[0]
         subject = self.subjects[subject_id]
-        print(f'{__file__}:{sys._getframe().f_lineno}: index id {index}')
 
         # Set up file path
         image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', '%04d.jpg' % (light_id))
@@ -113,8 +110,6 @@ class RelightDataset(Dataset):
                 if not mask[i][j]:
                     transport[i][j] = [0] * 9
 
-        # flatten
-        # image = torch.Tensor(image.reshape((64, -1, 3)))
         image = torch.Tensor(image).T
         mask = torch.Tensor(mask.reshape((-1))).T
         albedo = torch.Tensor(albedo.reshape((-1, 3))).T

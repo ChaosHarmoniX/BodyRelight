@@ -67,29 +67,17 @@ def train_epoch(net, train_dataloader, loss, updater, device):
     net.train() # 设为训练模式
     
     for train_data in train_dataloader:
-        print(f'{__file__}:{sys._getframe().f_lineno}: initial gpu')
-        gpu_usage()
 
         image = train_data['image'].to(device)
         mask = train_data['mask'].to(device)
         albedo_gt = train_data['albedo'].to(device)
         light_gt = train_data['light'].to(device)
         transport_gt = train_data['transport'].to(device)
-        print(f'{__file__}:{sys._getframe().f_lineno}: albedo_gt {albedo_gt.shape}')
-        print(f'{__file__}:{sys._getframe().f_lineno}: light_gt {light_gt.shape}')
-        print(f'{__file__}:{sys._getframe().f_lineno}: transport_gt {transport_gt.shape}')
-
-        print(f'{__file__}:{sys._getframe().f_lineno}: data load gpu')
-        gpu_usage()
 
         albedo_hat, light_hat, transport_hat = net(image)
         # with torch.no_grad:
-        print(f'{__file__}:{sys._getframe().f_lineno}: forward gpu')
-        gpu_usage()
-        print(f'{__file__}:{sys._getframe().f_lineno}: albedo_hat shape {albedo_hat.shape}')
 
         mask = mask.reshape((-1, 1, 512, 512))
-        print(f'{__file__}:{sys._getframe().f_lineno}: reshaped mask shape {mask.shape}')
         
         for i in range(3):
             albedo_hat[:, 0, :, :] = albedo_hat[:, i, :, :] * mask[:, 0, :, :]
@@ -102,30 +90,16 @@ def train_epoch(net, train_dataloader, loss, updater, device):
         light_hat = light_hat.reshape((-1, 3, 9))        
         albedo_hat = albedo_hat.reshape((albedo_hat.shape[0], albedo_hat.shape[1], -1))
         transport_hat = transport_hat.reshape((transport_hat.shape[0], transport_hat.shape[1], -1))
-        # albedo_hat = albedo_hat.permute(0, 3, 2, 1)
-        # light_hat = light_hat.permute(0, 2, 1)
-        # transport_hat = transport_hat.permute(0, 3, 2, 1)
-
-        print(f'{__file__}:{sys._getframe().f_lineno}: albedo_hat {albedo_hat.shape}')
-        print(f'{__file__}:{sys._getframe().f_lineno}: light_hat {light_hat.shape}')
-        print(f'{__file__}:{sys._getframe().f_lineno}: transport_hat {transport_hat.shape}')
-        # image_hat = None
-        # for i in range(albedo_hat.shape[0]):
-        #     image_hat_one_batch = albedo_hat[i] * (transport_hat[i] @ light_hat[i])
-        #     if image_hat == None:
-        #         image_hat = image_hat_one_batch
-        #     else:
-        #         image_hat = torch.concat((image_hat, image_hat_one_batch), dim=0)
         image_hat = albedo_hat * torch.bmm(light_hat, transport_hat) # 因为light_hat和transport_hat的维度是颠倒的，所以矩阵乘法也颠倒一下
         
         l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image_gt)
-        print(f'{__file__}:{sys._getframe().f_lineno}: after one data')
+
         updater.zero_grad()
         l.backward()
         updater.step()
 
 
-# 数据集的图片为1024 * 1024
+# 数据集的图片为512 * 512
 # aligned 3D models(脸朝前，垂直方向大小一致，padding一致（上下padding都为图片的5%）)。
 if __name__ == '__main__':
     # set cuda

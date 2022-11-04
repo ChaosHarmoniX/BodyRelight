@@ -2,10 +2,6 @@ import imp
 import torch
 from torch import nn
 
-# TODO: delete
-import sys
-from GPUtil import showUtilization as gpu_usage
-
 class MultiConv(nn.Module):
     image_size = 128
     def __init__(self, filter_channels, is_transpose = False, kernel_size = 4, stride = 2, reshape_times = 0):
@@ -51,42 +47,22 @@ class MultiConv(nn.Module):
     def forward(self, image):
         y = image
         # PIFu里的MultiConv是把各次计算结果放到list里，但是根据我的理解，应该只要最后一次的结果就好了
-        # feat_pyramid = [y]
-        # print(f'{__file__}:{sys._getframe().f_lineno}: conv forward: {y.shape}')
         for i, f in enumerate(self.filters):
-            print(f'{__file__}:{sys._getframe().f_lineno}: before cal: {y.shape}')
             y = f(y)
-            print(f'{__file__}:{sys._getframe().f_lineno}: after conv')
-            gpu_usage()
             if i != len(self.filters) - 1 and i != 0:
                 # batch normalization
                 y = self.batch_norms[i - 1](y)
-                print(f'{__file__}:{sys._getframe().f_lineno}: after batch norm')
-                gpu_usage()
                 # 激活函数
                 y = self.activate_func(y)
-                print(f'{__file__}:{sys._getframe().f_lineno}: after activate')
-                gpu_usage()
 
             # decoder的前三层反卷积的dropout
             if i < 3 and self.is_transpose: # TODO: 不清楚是不是应该在激活函数之后
                 y = torch.nn.functional.dropout(y, 0.5)
-                print(f'{__file__}:{sys._getframe().f_lineno}: after dropout')
-                gpu_usage()
-
-            # feat_pyramid.append(y)
-        # feat_pyramid = torch.cat(feat_pyramid, 0)
-        # print(feat_pyramid)
-        # return feat_pyramid
-        print(f'{__file__}:{sys._getframe().f_lineno}: after MultiConv forward')
         return y
         # y = image
         # feat_pyramid = [y]
-        # print(f'{__file__}:{sys._getframe().f_lineno}: conv forward: {y.shape}')
         # for i, f in enumerate(self.filters):
-        #     print(f'{__file__}:{sys._getframe().f_lineno}: before cal: {y.shape}')
         #     y = f(y)
-        #     print(f'{__file__}:{sys._getframe().f_lineno}: after cal:{y.shape}')
         #     if i != len(self.filters) - 1 and i != 0:
         #         # batch normalization
         #         y = self.batch_norms[i - 1](y)
@@ -98,7 +74,5 @@ class MultiConv(nn.Module):
         #         y = torch.nn.functional.dropout(y, 0.5)
 
         #     feat_pyramid.append(y)
-        # print(len(feat_pyramid[0][0][0]))
         # feat_pyramid = torch.cat(feat_pyramid, 0)
-        # print(f'{__file__}:{sys._getframe().f_lineno}: conv forward done:{feat_pyramid.shape}')
         # return feat_pyramid
