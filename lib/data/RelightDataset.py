@@ -4,6 +4,8 @@ import os
 import cv2
 import torch
 
+# TODO: delete
+import sys
 class RelightDataset(Dataset):
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -46,7 +48,7 @@ class RelightDataset(Dataset):
             raise RuntimeError('Unexpected phase')
 
     def get_lights(self):
-        return os.listdir(self.LIGHT)
+        return np.load(os.path.join(self.LIGHT, os.listdir(self.LIGHT)[0]))
 
     def __len__(self):
         return len(self.subjects) * len(self.lights)
@@ -55,15 +57,16 @@ class RelightDataset(Dataset):
         """
         Traverse all the images of one object in different lights first, then another object.
         """
-        light_id = index % len(self.lights)
-        subject_id = index // len(self.lights)
+
+        light_id = index % self.lights.shape[0]
+        subject_id = index // self.lights.shape[0]
         subject = self.subjects[subject_id]
+        print(f'{__file__}:{sys._getframe().f_lineno}: index id {index}')
 
         # Set up file path
-        image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', 'IMAGE.jpg')
+        image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', '%04d.jpg' % (light_id))
         mask_path = os.path.join(self.data_root, '%04d' % (subject_id), 'MASK', 'MASK.png')
         albedo_path = os.path.join(self.data_root, '%04d' % (subject_id), 'ALBEDO', 'ALBEDO.jpg')
-        light_path = os.path.join(self.LIGHT, str(self.lights[light_id]))
         transport_dir = os.path.join(self.data_root, '%04d' % (subject_id), 'TRANSFORM')
 
         # --------- Read groundtruth file data ------------
@@ -92,7 +95,7 @@ class RelightDataset(Dataset):
                     albedo[i][j] = [0, 0, 0]
         # light
         # [9, 3] SH coefficient
-        light = np.load(light_path) # TODO: 进一步cvt
+        light = self.lights[light_id, :, :] # TODO: 进一步cvt
 
         # transport
         # [H, W, 9]

@@ -1,34 +1,33 @@
 import torch
 
 def L1_loss(y, y_hat):
+    print(f'{__file__}:{sys._getframe().f_lineno}: l1 loss y shape {y.shape}')
+    print(f'{__file__}:{sys._getframe().f_lineno}: l1 loss y_hat shape {y_hat.shape}')
     return torch.abs(y_hat - y).sum()
 
 def tv_loss(y_hat):
-    # :param y_hat: [batch_size, c_3, h_size, w_size]
-    return torch.pow((y_hat[:, :, :-1, :-1] - y_hat[:, :, 1:, :-1]), 2) + \
-            torch.pow((y_hat[:, :, :-1, :-1] - y_hat[:, :, :-1, 1:]), 2)
+    image_size = 512
+    # :param y_hat: [batch_size, c_3, N]
+    y_hat = y_hat.view((y_hat.shape[0], y_hat.shape[1], image_size, image_size))
+    # y_hat: [batch_size, c_3, W, H]
+    tmp1 = torch.cat((y_hat[:, :, 1:, :], y_hat[:, :, 0, :].unsqueeze(2)), 2)
+    tmp2 = torch.cat((y_hat[:, :, :, 1:], y_hat[:, :, :, 0].unsqueeze(3)), 3)
+    return L1_loss(tmp1, y_hat) + L1_loss(tmp2, y_hat)
+    # return (torch.pow(tmp1, 2) + torch.pow(tmp2, 2)).sum()
 
 def loss(albedo_hat, light_hat, transport_hat, image_hat, albedo, light, transport, image):
-    # image = albedo * (transport * light)
+    # image = albedo * (transport @ light)
     batch_num = albedo_hat.shape[0]
 
-    for i in range(batch_num):
-        if i == 0:
-            shading = transport[i] @ light[i]
-            tranhxlight = transport_hat[i] @ light[i]
-            tranxlighth = transport[i] @ light_hat[i]
-            tranhxlighth = transport_hat[i] @ light_hat[i]
-        else:
-            shading = torch.concat((shading, transport[i] @ light[i]), 0)
-            tranhxlight = torch.concat((tranhxlight, transport_hat[i] @ light[i]), 0)
-            tranxlighth = torch.concat((tranxlighth, transport[i] @ light_hat[i]), 0)
-            tranhxlighth = torch.concat((tranhxlighth, transport_hat[i] @ light_hat[i]), 0)
-
+    shading         = torch.bmm(light, transport)
+    tranhxlight     = torch.bmm(light, transport_hat)
+    tranxlighth     = torch.bmm(light_hat, transport)
+    tranhxlighth    = torch.bmm(light_hat, transport_hat)
 
     sfs_losses = L1_loss(albedo, albedo_hat) + L1_loss(light, light_hat) + \
-                L1_loss(transport, transport_hat) + L1_loss(image, image_hat)
+                    L1_loss(transport, transport_hat) + L1_loss(image, image_hat)
     
-    tv_losses = L1_loss(tv_loss(albedo, albedo_hat)) + L1_loss(tv_loss(transport, transport_hat))
+    tv_losses = tv_loss(albedo_hat) + tv_loss(transport_hat)
     
     shading_losses = L1_loss(shading, tranhxlight) + L1_loss(shading, tranxlighth) + \
                         L1_loss(shading, tranhxlighth)
