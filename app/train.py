@@ -92,10 +92,10 @@ def train_epoch(net, train_dataloader, loss, updater, device):
         print(f'{__file__}:{sys._getframe().f_lineno}: reshaped mask shape {mask.shape}')
         
         for i in range(3):
-            albedo_hat[:, 0, :, :] = albedo_hat[:, i, :, :] * mask
+            albedo_hat[:, 0, :, :] = albedo_hat[:, i, :, :] * mask[:, 0, :, :]
         
         for i in range(9):
-            transport_hat[:, i, :, :] = transport_hat[:, i, :, :] * mask
+            transport_hat[:, i, :, :] = transport_hat[:, i, :, :] * mask[:, 0, :, :]
 
         image_gt = image.reshape((image.shape[0], image.shape[1], -1))
 
@@ -119,9 +119,11 @@ def train_epoch(net, train_dataloader, loss, updater, device):
         image_hat = albedo_hat * torch.bmm(light_hat, transport_hat) # 因为light_hat和transport_hat的维度是颠倒的，所以矩阵乘法也颠倒一下
         
         l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image_gt)
+        print(f'{__file__}:{sys._getframe().f_lineno}: after one data')
         updater.zero_grad()
         l.backward()
         updater.step()
+
 
 # 数据集的图片为1024 * 1024
 # aligned 3D models(脸朝前，垂直方向大小一致，padding一致（上下padding都为图片的5%）)。

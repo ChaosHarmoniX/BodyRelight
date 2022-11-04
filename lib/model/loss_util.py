@@ -1,8 +1,6 @@
 import torch
 
 def L1_loss(y, y_hat):
-    print(f'{__file__}:{sys._getframe().f_lineno}: l1 loss y shape {y.shape}')
-    print(f'{__file__}:{sys._getframe().f_lineno}: l1 loss y_hat shape {y_hat.shape}')
     return torch.abs(y_hat - y).sum()
 
 def tv_loss(y_hat):
