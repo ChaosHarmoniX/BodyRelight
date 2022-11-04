@@ -7,18 +7,23 @@ import sys
 from GPUtil import showUtilization as gpu_usage
 
 class MultiConv(nn.Module):
-    image_size = 512
-    def __init__(self, filter_channels, is_transpose = False, kernel_size = 4, stride = 2, padding_mode='same'):
+    image_size = 128
+    def __init__(self, filter_channels, is_transpose = False, kernel_size = 4, stride = 2, reshape_times = 0):
         super(MultiConv, self).__init__()
         self.filters = []
         self.batch_norms = []
         self.is_transpose = is_transpose
 
-        padding = ((self.image_size-1) * stride + kernel_size - self.image_size) // 2 if padding_mode == 'same' else 1
+        padding = ((self.image_size-1) * stride + kernel_size - self.image_size) // 2
         if not is_transpose:
             for l in range(0, len(filter_channels) - 1):
-                self.filters.append(
-                    nn.Conv2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=padding))
+                if reshape_times == 0:
+                    self.filters.append(
+                        nn.Conv2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=padding))
+                else:
+                    reshape_times -= 1
+                    self.filters.append(
+                        nn.Conv2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=1))
                 self.add_module("conv%d" % l, self.filters[l])
                 if l != 0 and l != len(filter_channels) - 2: # batch norm
                     self.batch_norms.append(nn.BatchNorm2d(filter_channels[l + 1]))
@@ -26,9 +31,15 @@ class MultiConv(nn.Module):
 
         else:
             # 反卷积块
+            # 128 --> 512
             for l in range(0, len(filter_channels) - 1):
-                self.filters.append(
-                    nn.ConvTranspose2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=padding))
+                if reshape_times != 0:
+                    reshape_times -= 1
+                    self.filters.append(
+                        nn.ConvTranspose2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=1))
+                else:
+                    self.filters.append(
+                        nn.ConvTranspose2d(filter_channels[l], filter_channels[l + 1], kernel_size=kernel_size, stride=stride, padding=257))
                 self.add_module("deconv%d" % l, self.filters[l])
                 if l != 0 and l != len(filter_channels) - 2: # batch norm
                     self.batch_norms.append(nn.BatchNorm2d(filter_channels[l + 1]))
@@ -67,6 +78,7 @@ class MultiConv(nn.Module):
         # feat_pyramid = torch.cat(feat_pyramid, 0)
         # print(feat_pyramid)
         # return feat_pyramid
+        print(f'{__file__}:{sys._getframe().f_lineno}: after MultiConv forward')
         return y
         # y = image
         # feat_pyramid = [y]
