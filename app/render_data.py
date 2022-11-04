@@ -295,7 +295,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, i
                 # cv2.imwrite(os.path.join(out_path, 'MASK', subject_name,
                 #             '%d_%d_%02d.png' % (y, p, j)), 255.0*out_mask)
                 
-                cv2.imwrite(os.path.join(out_path, 'IMAGE', 'IMAGE.jpg'), 255.0*out_all_f)
+                cv2.imwrite(os.path.join(out_path, 'IMAGE', '%04d.jpg'% (j)), 255.0*out_all_f)
                 
                 # rndr_uv.set_sh(sh)
                 # rndr_uv.analytic = False

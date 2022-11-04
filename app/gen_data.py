@@ -105,10 +105,10 @@ def gen_all_datasset():
         else:
             print("TRANSFORM file exist")
         # generate IMAGE
-        if(not os.path.exists(os.path.join(obj_root_path,'IMAGE','IMAGE.jpg'))):
+        if(not os.path.exists(os.path.join(obj_root_path,'IMAGE','0239.jpg'))):
             print("IMAGE NOT FOUND")
             rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-            render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw, shs, rndr,  arg_size,  pitch=[0])
+            render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw, shs, rndr,  arg_size,n_light=240,  pitch=[0])
         else:
             print("IMAGE file exist")
               
