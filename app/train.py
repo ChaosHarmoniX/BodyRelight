@@ -16,6 +16,21 @@ import json
 from lib.options import *
 from tqdm import tqdm
 
+# delete warnings
+import warnings
+warnings.filterwarnings("ignore")
+
+# for debug
+from visdom import Visdom
+import numpy as np
+import time
+wind = Visdom()
+# 初始化窗口信息
+wind.line([0.], # Y的第一个点的坐标
+		  [0.], # X的第一个点的坐标
+		  win = 'train_loss', # 窗口的名称
+		  opts = dict(title = 'train_loss') # 图像的标例
+)
 # lr = 0.0002
 # batch = 60
 
@@ -56,7 +71,8 @@ def train(net, train_loader, loss, num_epochs, updater, device):
 
     # training
     start_epoch = 0 if not opt.continue_train else max(opt.resume_epoch,0)
-    for epoch in tqdm(range(start_epoch, opt.num_epoch)):
+    for epoch in range(start_epoch, opt.num_epoch):
+        # for epoch in tqdm(range(start_epoch, opt.num_epoch)):
         train_epoch(net, train_loader, loss, updater, device)
     
     print("End training...")
@@ -65,9 +81,10 @@ def train(net, train_loader, loss, num_epochs, updater, device):
 """ 训练"""
 def train_epoch(net, train_dataloader, loss, updater, device):
     net.train() # 设为训练模式
-    
-    for train_data in train_dataloader:
-
+    counter = 0
+    print(train_dataloader.dataset.__len__())
+    for train_data in tqdm(train_dataloader):
+        counter += 1
         image = train_data['image'].to(device)
         mask = train_data['mask'].to(device)
         albedo_gt = train_data['albedo'].to(device)
@@ -93,7 +110,9 @@ def train_epoch(net, train_dataloader, loss, updater, device):
         image_hat = albedo_hat * torch.bmm(light_hat, transport_hat) # 因为light_hat和transport_hat的维度是颠倒的，所以矩阵乘法也颠倒一下
         
         l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image_gt)
-
+        # print('counter: ',counter,'loss: ', l.item())
+        wind.line([l.item()],[counter],win = 'train_loss',update = 'append')
+        
         updater.zero_grad()
         l.backward()
         updater.step()
