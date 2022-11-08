@@ -7,13 +7,15 @@ sys.path.insert(0, os.path.abspath(
 from lib.data.RelightDataset import RelightDataset
 from lib.model.BodyRelightNet import BodyRelightNet
 from lib.model.Conv import *
-from lib.model.loss_util import loss
+from lib.loss_util import loss
+from lib.train_util import calc_loss
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
 import json
 from lib.options import *
+from lib.plot_util import *
 from tqdm import tqdm
 
 # delete warnings
@@ -24,20 +26,37 @@ warnings.filterwarnings("ignore")
 from visdom import Visdom
 import numpy as np
 import time
-wind = Visdom()
-# 初始化窗口信息
-wind.line([0.], # Y的第一个点的坐标
-		  [0.], # X的第一个点的坐标
-		  win = 'train_loss', # 窗口的名称
-		  opts = dict(title = 'train_loss') # 图像的标例
-)
-# lr = 0.0002
-# batch = 60
 
 # get options
 opt = BaseOptions().parse() # 一些配置，比如batch_size、线程数
 
-def train(net, train_loader, loss, num_epochs, updater, device):
+if opt.plot:
+    train_wind = Visdom()
+    # # 初始化窗口信息
+    train_wind.line([0.], # Y的第一个点的坐标
+            [0.], # X的第一个点的坐标
+            win = 'train_loss', # 窗口的名称
+            opts = dict(title = 'train_loss') # 图像的标例
+    )
+
+    train_epoch_wind = Visdom()
+    # # 初始化窗口信息
+    train_epoch_wind.line([0.], # Y的第一个点的坐标
+            [0.], # X的第一个点的坐标
+            win = 'train_epoch_loss', # 窗口的名称
+            opts = dict(title = 'train_epoch_loss') # 图像的标例
+    )
+
+    test_epoch_wind = Visdom()
+    # # 初始化窗口信息
+    test_epoch_wind.line([0.], # Y的第一个点的坐标
+            [0.], # X的第一个点的坐标
+            win = 'test_epoch_loss', # 窗口的名称
+            opts = dict(title = 'test_epoch_loss') # 图像的标例
+    )
+# lr = 0.0002
+# batch = 60
+def train(net, train_loader, test_loader, loss, num_epochs, updater, device, plot):
     """
     :param net:
     :param train_iter: 训练数据集迭代器
@@ -45,7 +64,7 @@ def train(net, train_loader, loss, num_epochs, updater, device):
     :num_epochs: 迭代次数
     :updater: 优化算法, 如torch.optim.SGD()
     """
-    print("Begin training...")
+    print("Net training begin...")
 
     # load checkpoints
     if opt.load_net_checkpoint_path is not None:
@@ -71,20 +90,28 @@ def train(net, train_loader, loss, num_epochs, updater, device):
 
     # training
     start_epoch = 0 if not opt.continue_train else max(opt.resume_epoch,0)
-    for epoch in range(start_epoch, opt.num_epoch):
+    for epoch in range(start_epoch, num_epochs):
         # for epoch in tqdm(range(start_epoch, opt.num_epoch)):
-        train_epoch(net, train_loader, loss, updater, device)
+        print(f'Start epoch {epoch}...')
+        train_epoch(epoch, net, train_loader, test_loader, loss, updater, device, plot)
     
-    print("End training...")
+    print("Net training end...")
 
 
 """ 训练"""
-def train_epoch(net, train_dataloader, loss, updater, device):
+def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, device, plot):
+    """
+    :return : train average loss, test average loss
+    """
+    epoch_start_time = time.time()
+
+    ### train
+    print('Start training...')
     net.train() # 设为训练模式
-    counter = 0
-    print(train_dataloader.dataset.__len__())
-    for train_data in tqdm(train_dataloader):
-        counter += 1
+    train_loss = []
+    for index, train_data in enumerate(tqdm(train_dataloader)):
+        iter_start_time = time.time()
+
         image = train_data['image'].to(device)
         mask = train_data['mask'].to(device)
         albedo_gt = train_data['albedo'].to(device)
@@ -92,30 +119,59 @@ def train_epoch(net, train_dataloader, loss, updater, device):
         transport_gt = train_data['transport'].to(device)
 
         albedo_hat, light_hat, transport_hat = net(image)
-        # with torch.no_grad:
+        
+        l = calc_loss(mask, image, albedo_hat, light_hat, transport_hat, albedo_gt, light_gt, transport_gt, loss)
+        if plot:
+            train_wind.line([l.item()], [index], win = 'train_loss', update = 'append')
+        else:
+            print(f'index: {index}, loss: {l.item()}')
+        
+        train_loss.append(l)
 
-        mask = mask.reshape((-1, 1, 512, 512))
-        
-        for i in range(3):
-            albedo_hat[:, 0, :, :] = albedo_hat[:, i, :, :] * mask[:, 0, :, :]
-        
-        for i in range(9):
-            transport_hat[:, i, :, :] = transport_hat[:, i, :, :] * mask[:, 0, :, :]
-
-        image_gt = image.reshape((image.shape[0], image.shape[1], -1))
-
-        light_hat = light_hat.reshape((-1, 3, 9))        
-        albedo_hat = albedo_hat.reshape((albedo_hat.shape[0], albedo_hat.shape[1], -1))
-        transport_hat = transport_hat.reshape((transport_hat.shape[0], transport_hat.shape[1], -1))
-        image_hat = albedo_hat * torch.bmm(light_hat, transport_hat) # 因为light_hat和transport_hat的维度是颠倒的，所以矩阵乘法也颠倒一下
-        
-        l = loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image_gt)
-        # print('counter: ',counter,'loss: ', l.item())
-        wind.line([l.item()],[counter],win = 'train_loss',update = 'append')
-        
         updater.zero_grad()
         l.backward()
         updater.step()
+
+        iter_net_time = time.time()
+        eta = ((iter_net_time - epoch_start_time) / (index + 1)) * len(train_dataloader) - (
+                iter_net_time - epoch_start_time) # 当前epoch的剩余时间
+
+        if index % opt.freq_plot == 0:
+            print(
+                'Name: {0} | Epoch: {1} | {2}/{3} | Err: {4:.06f} | Sigma: {5:.02f} | netT: {6:.05f} | ETA: {7:02d}:{8:02d}'.format(
+                    opt.name, epoch, index, len(train_dataloader), l.item(), opt.sigma,
+                    iter_net_time - iter_start_time, int(eta // 60), int(eta - 60 * (eta // 60))))
+
+        if index % opt.freq_save == 0 and index != 0:
+            torch.save(net.state_dict(), '%s/%s/net_latest' % (opt.checkpoints_path, opt.name))
+            torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
+
+    # test
+    print('Start testing...')
+    with torch.no_grad():
+        net.eval()
+        test_loss = []
+        for index, test_data in enumerate(tqdm(test_dataloader)):
+            image = test_data['image'].to(device)
+            mask = test_data['mask'].to(device)
+            albedo_gt = test_data['albedo'].to(device)
+            light_gt = test_data['light'].to(device)
+            transport_gt = test_data['transport'].to(device)
+
+            albedo_hat, light_hat, transport_hat = net(image)
+            
+            test_loss.append(calc_loss(mask, image, albedo_hat, light_hat, transport_hat, albedo_gt, light_gt, transport_gt, loss))
+    
+        train_loss = np.average(train_loss).item()
+        test_loss = np.average(test_loss).item()
+
+    if plot:
+        train_epoch_wind.line([train_loss], [epoch + 1], win = 'test_epoch_loss', update = 'append')
+        test_epoch_wind.line([test_loss], [epoch + 1], win = 'test_epoch_loss', update = 'append')
+    else:
+        print(f'epoch: {epoch}, train loss: {train_loss}')
+        print(f'epoch: {epoch}, test loss: {test_loss}')
+        
 
 
 # 数据集的图片为512 * 512
@@ -139,4 +195,4 @@ if __name__ == '__main__':
     
     # loss
     optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, weight_decay=0)
-    train(net, train_dataloader, loss, opt.num_epoch, optimizer, cuda)
+    train(net, train_dataloader, test_dataloader, loss, opt.num_epoch, optimizer, cuda, opt.plot)

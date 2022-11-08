@@ -86,6 +86,9 @@ class BaseOptions():
         g_model.add_argument('--use_tanh', action='store_true',
                              help='using tanh after last conv of image_filter network')
 
+
+        parser.add_argument('--plot', type=bool, default=True, help='if random flip')
+
         # for train
         parser.add_argument('--random_flip', action='store_true', help='if random flip')
         parser.add_argument('--random_trans', action='store_true', help='if random flip')
