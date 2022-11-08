@@ -31,7 +31,6 @@ class RelightDataset(Dataset):
         Get the all the train/eval image files' names
         """
         all_subjects = os.listdir(self.data_root)
-
         var_subjects = np.loadtxt(os.path.join(self.metadata_root, 'val.txt'), dtype=str) # 测试用的数据集
         if len(var_subjects) == 0 and not self.is_eval:
             return all_subjects

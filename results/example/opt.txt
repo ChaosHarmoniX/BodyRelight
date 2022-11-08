@@ -51,6 +51,7 @@
     3
   ],
   "use_tanh": false,
+  "plot": true,
   "random_flip": false,
   "random_trans": false,
   "random_scale": false,

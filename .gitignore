@@ -14,3 +14,4 @@ scdata/
 !lib/data/
 datas/
 log.txt
+tmp.*

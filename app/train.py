@@ -15,7 +15,6 @@ from torch.utils.data import DataLoader
 
 import json
 from lib.options import *
-from lib.plot_util import *
 from tqdm import tqdm
 
 # delete warnings
@@ -121,6 +120,8 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
         albedo_hat, light_hat, transport_hat = net(image)
         
         l = calc_loss(mask, image, albedo_hat, light_hat, transport_hat, albedo_gt, light_gt, transport_gt, loss)
+        
+        # plot frequency can be smaller to accelerate
         if plot:
             train_wind.line([l.item()], [index], win = 'train_loss', update = 'append')
         else:
@@ -136,13 +137,11 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
         eta = ((iter_net_time - epoch_start_time) / (index + 1)) * len(train_dataloader) - (
                 iter_net_time - epoch_start_time) # 当前epoch的剩余时间
 
-        if index % opt.freq_plot == 0:
-            print(
-                'Name: {0} | Epoch: {1} | {2}/{3} | Err: {4:.06f} | Sigma: {5:.02f} | netT: {6:.05f} | ETA: {7:02d}:{8:02d}'.format(
-                    opt.name, epoch, index, len(train_dataloader), l.item(), opt.sigma,
-                    iter_net_time - iter_start_time, int(eta // 60), int(eta - 60 * (eta // 60))))
-
         if index % opt.freq_save == 0 and index != 0:
+            print(
+                '\nName: {0} | Epoch: {1} | {2}/{3} | Err: {4:.06f} | netT: {5:.05f}s | ETA: {6:02d}:{7:02d}'.format(
+                    opt.name, epoch, index, len(train_dataloader), l.item(),
+                    iter_net_time - iter_start_time, int(eta // 60), int(eta - 60 * (eta // 60))))
             torch.save(net.state_dict(), '%s/%s/net_latest' % (opt.checkpoints_path, opt.name))
             torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
 
@@ -188,7 +187,7 @@ if __name__ == '__main__':
     print('train data size: ', len(train_dataloader))
     
     # test dataset
-    test_dataset = RelightDataset(opt, 'test')
+    test_dataset = RelightDataset(opt, 'eval')
     test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches,
                                     num_workers=0, pin_memory=opt.pin_memory)
     print('test data size: ', len(test_dataloader))
