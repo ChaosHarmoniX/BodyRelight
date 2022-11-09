@@ -109,6 +109,7 @@ class BaseOptions():
                             help='how many meshes to generate during testing')
         parser.add_argument('--eval_input', default='eval/IMAGE.jpg', help='eval input image path')
         parser.add_argument('--eval_output', default='eval/eval.jpg', help='eval output path')
+        parser.add_argument('--eval_light', type=int, default=0, help='eval light')
 
         # path
         parser.add_argument('--checkpoints_path', type=str, default='./checkpoints', help='path to save checkpoints')
