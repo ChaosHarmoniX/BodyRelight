@@ -107,6 +107,8 @@ class BaseOptions():
         parser.add_argument('--all_mesh', action='store_true', help='generate meshs from all hourglass output')
         parser.add_argument('--num_gen_mesh_test', type=int, default=1,
                             help='how many meshes to generate during testing')
+        parser.add_argument('--eval_input', default='eval/IMAGE.jpg', help='eval input image path')
+        parser.add_argument('--eval_output', default='eval/eval.jpg', help='eval output path')
 
         # path
         parser.add_argument('--checkpoints_path', type=str, default='./checkpoints', help='path to save checkpoints')
