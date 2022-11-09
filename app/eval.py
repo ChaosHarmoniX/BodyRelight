@@ -18,7 +18,7 @@ if __name__ == '__main__':
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    net.load_state_dict(torch.load(opt.load_net_checkpoint_path, map_location=cuda))
+    net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_latest', map_location=cuda))
     net.eval()
 
     
@@ -32,9 +32,6 @@ if __name__ == '__main__':
         image = torch.Tensor(image).T.unsqueeze(0)
         image = image.to(device=cuda)
         
-        mask = torch.Tensor(mask.reshape((-1))).T.unsqueeze(0)
-        mask = mask.to(device=cuda)
-
         albedo = cv2.imread(os.path.join(opt.eval_input, 'ALBEDO.jpg'))
         albedo = cv2.cvtColor(albedo, cv2.COLOR_BGR2RGB) / 255.0
         for i in range(albedo.shape[0]): # mask albedo
@@ -42,7 +39,7 @@ if __name__ == '__main__':
                 if not mask[i][j]:
                     albedo[i][j] = [0, 0, 0]
 
-        light_dir = os.path.join(opt.dataroot, 'sh')
+        light_dir = os.path.join(opt.dataroot, '..', 'datas', 'sh')
         lights = np.load(os.path.join(light_dir, os.listdir(light_dir)[0]))
         light = lights[opt.eval_light]
 
@@ -60,13 +57,15 @@ if __name__ == '__main__':
                 if not mask[i][j]:
                     transport[i][j] = [0] * 9
 
+        mask = torch.Tensor(mask.reshape((-1))).T.unsqueeze(0)
+        mask = mask.to(device=cuda)
         albedo = torch.Tensor(albedo.reshape((-1, 3))).T.unsqueeze(0).to(cuda)
         light = torch.Tensor(light).T.unsqueeze(0).to(cuda)
         transport = torch.Tensor(transport.reshape((-1, 9))).T.unsqueeze(0).to(cuda)
 
         albedo_eval, light_eval, transport_eval = net(image)
         
-        error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss)
+        error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
         
         mask = mask.reshape((-1, 1, 512, 512))
         
@@ -84,5 +83,5 @@ if __name__ == '__main__':
         image_eval *= 255
         image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).T.to('cpu')
 
-    print(error)
+    print(f'error: {error}')
     cv2.imwrite(opt.eval_output, image_eval.numpy())
