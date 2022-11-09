@@ -1,5 +1,4 @@
 import sys
-from GPUtil import showUtilization as gpu_usage
 import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
