@@ -72,7 +72,6 @@ def gen_all_datasset():
     initialize_GL_context(width=arg_size, height=arg_size, egl=arg_egl)
     
     for folder_of_raw in data_folders:
-        # folder_of_raw='0001'
         print("Processing: "+folder_of_raw)
         os.makedirs(os.path.join(data_root_PATH,folder_of_raw),exist_ok=True)
         obj_root_path=os.path.join(data_root_PATH,folder_of_raw)# data folder

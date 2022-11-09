@@ -16,3 +16,4 @@ datas/
 log.txt
 tmp.*
 checkpoints/
+eval/
