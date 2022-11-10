@@ -10,6 +10,7 @@ def calc_loss(mask, image, albedo_hat, light_hat, transport_hat,
     for i in range(9):
         transport_hat[:, i, :, :] = transport_hat[:, i, :, :] * mask[:, 0, :, :]
 
+    image = image.permute(0, 1, 3, 2) # 为了保证是按H reshape
     image_gt = image.reshape((image.shape[0], image.shape[1], -1))
 
     light_hat = light_hat.reshape((-1, 3, 9))        

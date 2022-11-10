@@ -24,7 +24,7 @@ if __name__ == '__main__':
     
     with torch.no_grad():
         image = cv2.imread(os.path.join(opt.eval_input, 'IMAGE.jpg'))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) / 255.0
+        image = image / 255.0
         
         mask = cv2.imread(os.path.join(opt.eval_input, 'MASK.png'))
         mask = mask[:, :, 0] != 0
@@ -33,11 +33,11 @@ if __name__ == '__main__':
         image = image.to(device=cuda)
         
         albedo = cv2.imread(os.path.join(opt.eval_input, 'ALBEDO.jpg'))
-        albedo = cv2.cvtColor(albedo, cv2.COLOR_BGR2RGB) / 255.0
-        # for i in range(albedo.shape[0]): # mask albedo
-        #     for j in range(albedo.shape[1]):
-        #         if not mask[i][j]:
-        #             albedo[i][j] = [0, 0, 0]
+        albedo = albedo / 255.0
+        for i in range(albedo.shape[0]): # mask albedo
+            for j in range(albedo.shape[1]):
+                if not mask[i][j]:
+                    albedo[i][j] = [0, 0, 0]
 
         light_dir = os.path.join(opt.dataroot, '..', 'datas', 'sh')
         lights = np.load(os.path.join(light_dir, os.listdir(light_dir)[0]))
@@ -52,42 +52,39 @@ if __name__ == '__main__':
             else:
                 transport = np.concatenate((transport, tmp), axis= 2)
 
-        # for i in range(transport.shape[0]): # mask transport
-        #     for j in range(transport.shape[1]):
-        #         if not mask[i][j]:
-        #             transport[i][j] = [0] * 9
+        for i in range(transport.shape[0]): # mask transport
+            for j in range(transport.shape[1]):
+                if not mask[i][j]:
+                    transport[i][j] = [0] * 9
+        
         cv2.imwrite('./eval/gt_without_reshape.jpg', albedo * (transport @ light))
+        
         mask = torch.Tensor(mask.reshape((-1))).T.unsqueeze(0)
         mask = mask.to(device=cuda)
         albedo = torch.Tensor(albedo.reshape((-1, 3))).T.unsqueeze(0).to(cuda)
         light = torch.Tensor(light).T.unsqueeze(0).to(cuda)
         transport = torch.Tensor(transport.reshape((-1, 9))).T.unsqueeze(0).to(cuda)
-        print(f'albedo shape: {albedo.shape}')
-        print(f'light shape: {light.shape}')
-        print(f'transport shape: {transport.shape}')
-        image_gt = (albedo * torch.bmm(light, transport)).squeeze(0).reshape((-1, 512, 512)).permute(0, 2, 1).T.to('cpu')
-        print(image_gt.shape)
+        image_gt = (albedo * torch.bmm(light, transport)).squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
         cv2.imwrite('./eval/gt.jpg', image_gt.numpy())
 
-    #     albedo_eval, light_eval, transport_eval = net(image)
+        albedo_eval, light_eval, transport_eval = net(image)
         
-    #     error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
+        error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
         
-    #     mask = mask.reshape((-1, 1, 512, 512))
+        mask = mask.reshape((-1, 1, 512, 512))
         
-    #     for i in range(3):
-    #         albedo_eval[:, 0, :, :] = albedo_eval[:, i, :, :] * mask[:, 0, :, :]
+        for i in range(3):
+            albedo_eval[:, 0, :, :] = albedo_eval[:, i, :, :] * mask[:, 0, :, :]
         
-    #     for i in range(9):
-    #         transport_eval[:, i, :, :] = transport_eval[:, i, :, :] * mask[:, 0, :, :]
+        for i in range(9):
+            transport_eval[:, i, :, :] = transport_eval[:, i, :, :] * mask[:, 0, :, :]
 
-    #     light_eval = light_eval.reshape((-1, 3, 9))        
-    #     albedo_eval = albedo_eval.reshape((albedo_eval.shape[0], albedo_eval.shape[1], -1))
-    #     transport_eval = transport_eval.reshape((transport_eval.shape[0], transport_eval.shape[1], -1))
+        light_eval = light_eval.reshape((-1, 3, 9))        
+        albedo_eval = albedo_eval.reshape((albedo_eval.shape[0], albedo_eval.shape[1], -1))
+        transport_eval = transport_eval.reshape((transport_eval.shape[0], transport_eval.shape[1], -1))
         
-    #     image_eval = albedo_eval * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
-    #     image_eval *= 255
-    #     image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).T.to('cpu')
+        image_eval = albedo_eval * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
+        image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
 
-    # print(f'error: {error}')
-    # cv2.imwrite(opt.eval_output, image_eval.numpy())
+    print(f'error: {error}')
+    cv2.imwrite(opt.eval_output, image_eval.numpy())

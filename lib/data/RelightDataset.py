@@ -72,9 +72,9 @@ class RelightDataset(Dataset):
         mask = mask[:, :, 0] != 0
 
         # image
-        # [H, W, 3] 0 ~ 1 float
+        # [H, W, 3]
         image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) / 255.0
+        # image = image / 255.0
         for i in range(image.shape[0]): # mask image
             for j in range(image.shape[1]):
                 if not mask[i][j]:
@@ -84,7 +84,7 @@ class RelightDataset(Dataset):
         # albedo
         # [H, W, 3] 0 ~ 1 float
         albedo = cv2.imread(albedo_path)
-        albedo = cv2.cvtColor(albedo, cv2.COLOR_BGR2RGB) / 255.0
+        albedo = albedo / 255.0
         for i in range(albedo.shape[0]): # mask albedo
             for j in range(albedo.shape[1]):
                 if not mask[i][j]:
@@ -109,11 +109,11 @@ class RelightDataset(Dataset):
                 if not mask[i][j]:
                     transport[i][j] = [0] * 9
 
-        image = torch.Tensor(image).T
-        mask = torch.Tensor(mask.reshape((-1))).T
-        albedo = torch.Tensor(albedo.reshape((-1, 3))).T
+        image = torch.Tensor(image).T # 之后需要处理
+        mask = torch.Tensor(mask.reshape((-1))).T # 以H reshape
+        albedo = torch.Tensor(albedo.reshape((-1, 3))).T # 以H reshape
         light = torch.Tensor(light).T
-        transport = torch.Tensor(transport.reshape((-1, 9))).T
+        transport = torch.Tensor(transport.reshape((-1, 9))).T # 以H reshape
 
         res = {
             'name': subject,
