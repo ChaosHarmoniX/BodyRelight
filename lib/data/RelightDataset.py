@@ -9,7 +9,7 @@ class RelightDataset(Dataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def __init__(self, opt, phase='train', projection_mode='orthogonal'):
+    def __init__(self, opt, phase='train', projection_mode='orthogonal',light_n=1,sample_light=True):
         self.opt = opt
         self.projection_mode = projection_mode
 
@@ -24,7 +24,9 @@ class RelightDataset(Dataset):
         self.load_size = self.opt.loadSize
 
         self.subjects = self.get_subjects()
-        self.lights = self.get_lights()
+        self.lights=self.get_lights()
+        self.light_n=light_n
+        self.sample_light = sample_light
 
     def get_subjects(self):
         """
@@ -48,18 +50,20 @@ class RelightDataset(Dataset):
         return np.load(os.path.join(self.LIGHT, os.listdir(self.LIGHT)[0]))
 
     def __len__(self):
-        return len(self.subjects) * len(self.lights)
+        return len(self.subjects) * (self.light_n if self.sample_light and self.light_n < self.lights.shape[0] else self.lights.shape[0])
 
     def get_item(self, index):
         """
         Traverse all the images of one object in different lights first, then another object.
         """
 
-        light_id = index % self.lights.shape[0]
+        light_id = index % ( self.light_n if self.sample_light and self.light_n < self.lights.shape[0] else self.lights.shape[0] )
         subject_id = index // self.lights.shape[0]
         subject = self.subjects[subject_id]
 
         # Set up file path
+        if(self.sample_light):
+            light_id=np.random.randint(0,self.lights.shape[0])
         image_path = os.path.join(self.data_root, '%04d' % (subject_id), 'IMAGE', '%04d.jpg' % (light_id))
         mask_path = os.path.join(self.data_root, '%04d' % (subject_id), 'MASK', 'MASK.png')
         albedo_path = os.path.join(self.data_root, '%04d' % (subject_id), 'ALBEDO', 'ALBEDO.jpg')

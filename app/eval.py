@@ -83,8 +83,8 @@ if __name__ == '__main__':
         albedo_eval = albedo_eval.reshape((albedo_eval.shape[0], albedo_eval.shape[1], -1))
         transport_eval = transport_eval.reshape((transport_eval.shape[0], transport_eval.shape[1], -1))
         
-        image_eval = albedo_eval * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
+        image_eval = albedo_eval*255 * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
         image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
-
+    cv2.imwrite('./eval/eval_albedo.jpg', albedo_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu').numpy()*255)
     print(f'error: {error}')
     cv2.imwrite(opt.eval_output, image_eval.numpy())
