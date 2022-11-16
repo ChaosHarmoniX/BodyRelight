@@ -7,7 +7,7 @@ from lib.data.RelightDataset import RelightDataset
 from lib.model.BodyRelightNet import BodyRelightNet
 from lib.model.Conv import *
 from lib.loss_util import loss
-from lib.train_util import calc_loss
+from lib.train_util import *
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -88,10 +88,13 @@ def train(net, train_loader, test_loader, loss, num_epochs, updater, device, plo
 
     # training
     start_epoch = 0 if not opt.continue_train else max(opt.resume_epoch,0)
+    lr = opt.learning_rate
     for epoch in range(start_epoch, num_epochs):
         # for epoch in tqdm(range(start_epoch, opt.num_epoch)):
         print(f'Start epoch {epoch}...')
         train_epoch(epoch, net, train_loader, test_loader, loss, updater, device, plot)
+        lr = adjust_learning_rate(updater, epoch, lr, opt.schedule, opt.gamma)
+
     
     print("Net training end...")
 

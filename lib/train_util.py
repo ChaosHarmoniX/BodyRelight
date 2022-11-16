@@ -19,3 +19,11 @@ def calc_loss(mask, image, albedo_hat, light_hat, transport_hat,
     image_hat = albedo_hat * torch.bmm(light_hat, transport_hat) # 因为light_hat和transport_hat的维度是颠倒的，所以矩阵乘法也颠倒一下
     
     return loss(albedo_hat, light_hat, transport_hat, image_hat, albedo_gt, light_gt, transport_gt, image_gt)
+
+def adjust_learning_rate(optimizer, epoch, lr, schedule, gamma):
+    """Sets the learning rate to the initial LR decayed by schedule"""
+    if epoch in schedule:
+        lr *= gamma
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+    return lr
