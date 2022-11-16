@@ -102,6 +102,7 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
     :return : train average loss, test average loss
     """
     epoch_start_time = time.time()
+    train_dataloader_size=len(train_dataloader)
 
     ### train
     print('Start training...')
@@ -122,7 +123,7 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
         
         # plot frequency can be smaller to accelerate
         if plot:
-            train_wind.line([l.item()], [index], win = 'train_loss', update = 'append')
+            train_wind.line([l.item()], [epoch*train_dataloader_size+index], win = 'train_loss', update = 'append')
         else:
             print(f'index: {index}, loss: {l.item()}')
         
@@ -169,7 +170,7 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
         test_loss = np.average(test_loss).item()
 
     if plot:
-        train_epoch_wind.line([train_loss], [epoch + 1], win = 'test_epoch_loss', update = 'append')
+        train_epoch_wind.line([train_loss], [epoch + 1], win = 'train_epoch_loss', update = 'append')
         test_epoch_wind.line([test_loss], [epoch + 1], win = 'test_epoch_loss', update = 'append')
     else:
         print(f'epoch: {epoch}, train loss: {train_loss}')
