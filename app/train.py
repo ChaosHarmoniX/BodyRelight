@@ -145,7 +145,10 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
             torch.save(net.state_dict(), '%s/%s/net_latest' % (opt.checkpoints_path, opt.name))
             # torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
     torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
-        
+    
+    for i in range(len(train_loss)):
+        train_loss[i] = train_loss[i].cpu().detach().numpy()
+    train_loss = np.average(train_loss).item()
     
 
     # test
@@ -162,9 +165,7 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
 
             albedo_hat, light_hat, transport_hat = net(image)
             
-            test_loss.append(calc_loss(mask, image, albedo_hat, light_hat, transport_hat, albedo_gt, light_gt, transport_gt, loss))
-    
-        train_loss = np.average(train_loss).item()
+            test_loss.append(calc_loss(mask, image, albedo_hat, light_hat, transport_hat, albedo_gt, light_gt, transport_gt, loss).cpu().detach().numpy())
         test_loss = np.average(test_loss).item()
 
     if plot:
