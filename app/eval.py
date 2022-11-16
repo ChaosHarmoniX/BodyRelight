@@ -10,29 +10,35 @@ import cv2
 from lib.train_util import calc_loss
 from lib.loss_util import loss
 import numpy as np
+import argparse
 
-opt = BaseOptions().parse() # 一些配置，比如batch_size、线程数
 
 if __name__ == '__main__':
+    opt = BaseOptions().parse() # 一些配置，比如batch_size、线程数
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--eval_input', default='eval/', help='eval input image path')
+    parser.add_argument('--eval_output', default='eval/eval.jpg', help='eval output path')
+    parser.add_argument('--eval_light', type=int, default=0, help='eval light')
+    eval_opt = parser.parse_args()
     # set cuda
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    # net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_latest', map_location=cuda))
-    # net.eval()
+    net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_latest', map_location=cuda))
+    net.eval()
 
     
     with torch.no_grad():
-        image = cv2.imread(os.path.join(opt.eval_input, 'IMAGE.jpg'))
+        image = cv2.imread(os.path.join(eval_opt.eval_input, 'IMAGE.jpg'))
         image = image / 255.0
         
-        mask = cv2.imread(os.path.join(opt.eval_input, 'MASK.png'))
+        mask = cv2.imread(os.path.join(eval_opt.eval_input, 'MASK.png'))
         mask = mask[:, :, 0] != 0
         
         image = torch.Tensor(image).T.unsqueeze(0)
         image = image.to(device=cuda)
         
-        albedo = cv2.imread(os.path.join(opt.eval_input, 'ALBEDO.jpg'))
+        albedo = cv2.imread(os.path.join(eval_opt.eval_input, 'ALBEDO.jpg'))
         albedo = albedo / 255.0
         for i in range(albedo.shape[0]): # mask albedo
             for j in range(albedo.shape[1]):
@@ -41,11 +47,11 @@ if __name__ == '__main__':
 
         light_dir = os.path.join(opt.dataroot, '..', 'datas', 'sh')
         lights = np.load(os.path.join(light_dir, os.listdir(light_dir)[0]))
-        light = lights[opt.eval_light]
+        light = lights[eval_opt.eval_light]
 
         transport = []
         for i in range(9):
-            transport_path = os.path.join(opt.eval_input, '%01d.jpg' % (i))
+            transport_path = os.path.join(eval_opt.eval_input, '%01d.jpg' % (i))
             tmp = cv2.imread(transport_path)[:, :, 0:1] # TODO: 进一步cvt
             if len(transport) == 0:
                 transport = tmp
@@ -87,4 +93,4 @@ if __name__ == '__main__':
         image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
     cv2.imwrite('./eval/eval_albedo.jpg', albedo_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu').numpy()*255)
     print(f'error: {error}')
-    cv2.imwrite(opt.eval_output, image_eval.numpy())
+    cv2.imwrite(eval_opt.eval_output, image_eval.numpy())
