@@ -15,7 +15,7 @@
   "learning_rateC": 0.001,
   "num_epoch": 100,
   "freq_plot": 10,
-  "freq_save": 50,
+  "freq_save": 150,
   "freq_save_ply": 100,
   "no_gen_mesh": false,
   "no_num_eval": false,
