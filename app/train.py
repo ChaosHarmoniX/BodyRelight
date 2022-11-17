@@ -141,14 +141,15 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
                 iter_net_time - epoch_start_time) # 当前epoch的剩余时间
 
         # if index % opt.freq_save == 0 and index != 0:
-        if index % opt.freq_save == 0 :
+        if index  == 0 :
             print(
                 '\nName: {0} | Epoch: {1} | {2}/{3} | Err: {4:.06f} | netT: {5:.05f}s | ETA: {6:02d}:{7:02d}'.format(
                     opt.name, epoch, index, len(train_dataloader), l.item(),
                     iter_net_time - iter_start_time, int(eta // 60), int(eta - 60 * (eta // 60))))
             torch.save(net.state_dict(), '%s/%s/net_latest' % (opt.checkpoints_path, opt.name))
             # torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
-    torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
+    if epoch%opt.freq_save == 0:
+        torch.save(net.state_dict(), '%s/%s/net_epoch_%d' % (opt.checkpoints_path, opt.name, epoch))
     
     for i in range(len(train_loss)):
         train_loss[i] = train_loss[i].cpu().detach().numpy()

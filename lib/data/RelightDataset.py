@@ -9,7 +9,7 @@ class RelightDataset(Dataset):
     def modify_commandline_options(parser, is_train):
         return parser
 
-    def __init__(self, opt, phase='train', projection_mode='orthogonal',light_n=1,sample_light=True):
+    def __init__(self, opt, phase='train', projection_mode='orthogonal',light_n=2,sample_light=True):
         self.opt = opt
         self.projection_mode = projection_mode
 
