@@ -2,7 +2,7 @@ import torch
 
 def calc_loss(mask, image, albedo_hat, light_hat, transport_hat,
                 albedo_gt, light_gt, transport_gt, loss):
-    mask = mask.reshape((-1, 1, 512, 512))
+    mask = mask.reshape((-1, 1, 1024, 1024))
     
     for i in range(3):
         albedo_hat[:, 0, :, :] = albedo_hat[:, i, :, :] * mask[:, 0, :, :]

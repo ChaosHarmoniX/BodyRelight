@@ -4,7 +4,7 @@ def L1_loss(y, y_hat):
     return torch.abs(y_hat - y).sum()
 
 def tv_loss(y_hat):
-    image_size = 512
+    image_size = 1024
     # :param y_hat: [batch_size, c_3, N]
     y_hat = y_hat.view((y_hat.shape[0], y_hat.shape[1], image_size, image_size))
     # y_hat: [batch_size, c_3, W, H]

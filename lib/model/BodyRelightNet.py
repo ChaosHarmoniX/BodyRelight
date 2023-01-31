@@ -10,13 +10,12 @@ class BodyRelightNet(nn.Module):
         super(BodyRelightNet, self).__init__()
 
         self.opt = opt
-        self.encoder = MultiConv(filter_channels=[3, 64, 128, 256, 512, 512, 512], reshape_times=2)
+        self.encoder = MultiConv(filter_channels=[3, 64, 128, 256, 512, 512, 512], start_with_bn=False)
 
-        self.albedo_decoder = Decoder(output=3)
-        self.transport_decoder = Decoder(output=9)
-        # self.light_decoder = MultiConv(filter_channels=[1536, 512, 128, 64, 3], reshape_times=0) # TODO: 四层卷积，但文章中没有说具体的，只知道最终输出为27维
-        self.light_decoder = MultiConv(filter_channels=[1536, 512, 128, 64, 27], reshape_times=4, kernel_size=11) # TODO: 四层卷积，但文章中没有说具体的，只知道最终输出为27维
-        # 改变kernel大小，直接生成[1,27,1,1]再reshape一下是否可行
+        self.albedo_decoder = Decoder(output=3, clamp=False)
+        self.transport_decoder = Decoder(output=9, clamp=True)
+        self.light_decoder = MultiConv(filter_channels=[1536, 512, 256, 128, 27], start_with_bn=True)
+
     def forward(self, x):
         """
         :param x: [C_3, H, W]
@@ -25,13 +24,14 @@ class BodyRelightNet(nn.Module):
         :light_map: [3, 9]
         :transport_map: [9, H, W]
         """
-        feature = self.encoder(x)
+        fs, feature = self.encoder(x)
         
-        albedo_feature, albedo_map = self.albedo_decoder(feature)
-        transport_feature, transport_map = self.transport_decoder(feature)
+        albedo_feature, albedo_map = self.albedo_decoder(fs, feature)
+        transport_feature, transport_map = self.transport_decoder(fs, feature)
 
-        compose_feature = torch.cat([feature, albedo_feature, transport_feature], 1)
-        light_map = self.light_decoder(compose_feature)
+        compose_feature = torch.cat((feature, albedo_feature, transport_feature), 1)
+        _, light_map = self.light_decoder(compose_feature)
+        light_map = torch.reshape(light_map, (-1, 9, 3))
 
-        return albedo_map, light_map, transport_map
+        return albedo_map, light_map, transport_map # TODO: 可能顺序要变
 
