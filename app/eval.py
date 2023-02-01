@@ -24,7 +24,7 @@ if __name__ == '__main__':
     cuda = torch.device('cuda:%d' % opt.gpu_id)
     net = BodyRelightNet(opt).to(device=cuda)
     
-    net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_epoch_50', map_location=cuda))
+    net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_latest', map_location=cuda))
     net.eval()
 
     
@@ -70,14 +70,14 @@ if __name__ == '__main__':
         albedo = torch.Tensor(albedo.reshape((-1, 3))).T.unsqueeze(0).to(cuda)
         light = torch.Tensor(light).T.unsqueeze(0).to(cuda)
         transport = torch.Tensor(transport.reshape((-1, 9))).T.unsqueeze(0).to(cuda)
-        image_gt = (albedo * torch.bmm(light, transport)).squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
+        image_gt = (albedo * torch.bmm(light, transport)).squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
         cv2.imwrite('./eval/gt.jpg', image_gt.numpy())
 
         albedo_eval, light_eval, transport_eval = net(image)
         
         error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
         
-        mask = mask.reshape((-1, 1, 512, 512))
+        mask = mask.reshape((-1, 1, 1024, 1024))
         
         for i in range(3):
             albedo_eval[:, 0, :, :] = albedo_eval[:, i, :, :] * mask[:, 0, :, :]
@@ -90,7 +90,14 @@ if __name__ == '__main__':
         transport_eval = transport_eval.reshape((transport_eval.shape[0], transport_eval.shape[1], -1))
         
         image_eval = albedo_eval * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
-        image_eval = image_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu')
-    cv2.imwrite('./eval/eval_albedo.jpg', albedo_eval.squeeze(0).reshape((-1, 512, 512)).permute(1, 2, 0).to('cpu').numpy()*255)
+        image_eval = image_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
+        
+        # 只衡量某种结果
+        parser.add_argument('--eval_half_output', default='eval/eval_half.jpg', help='eval_half output path')
+        image_half_eval = albedo * torch.bmm(light_eval, transport_eval)
+        image_half_eval = image_half_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
+        cv2.imwrite(eval_opt.eval_half_output, image_half_eval.numpy())
+
+    cv2.imwrite('./eval/eval_albedo.jpg', albedo_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu').numpy()*255)
     print(f'error: {error}')
     cv2.imwrite(eval_opt.eval_output, image_eval.numpy())
