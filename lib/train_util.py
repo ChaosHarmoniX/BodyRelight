@@ -6,7 +6,7 @@ def calc_loss(mask, image_gt, albedo_hat, light_hat, transport_hat,
     transport_hat = transport_hat * mask[:, None, :, :]
 
     tmp_light = light_hat.permute(0, 2, 1) # [2, 3, 9]
-    shading = torch.einsum('ijk,iklm->ijlm', tmp_light, transport_hat)
+    shading = torch.clamp(torch.einsum('ijk,iklm->ijlm', tmp_light, transport_hat), 0, 10.0)
     image_hat = albedo_hat * shading
 
     

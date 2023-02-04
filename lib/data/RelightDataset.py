@@ -106,7 +106,7 @@ class RelightDataset(Dataset):
         albedo = torch.from_numpy(albedo.astype(np.float32))
         light = torch.from_numpy(light.astype(np.float32))
         transport = torch.from_numpy(transport.astype(np.float32))
-        # image = torch.Tensor(image).T # 之后需要处理
+        
         image = albedo * torch.clamp(torch.matmul(transport, light), 0, 10.0)
         image = image * 2 - 1
         image = image.permute(2, 0, 1)
