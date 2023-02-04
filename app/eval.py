@@ -22,82 +22,48 @@ if __name__ == '__main__':
     eval_opt = parser.parse_args()
     # set cuda
     cuda = torch.device('cuda:%d' % opt.gpu_id)
-    net = BodyRelightNet(opt).to(device=cuda)
+    net = BodyRelightNet().to(device=cuda)
     
     net.load_state_dict(torch.load(f'{opt.checkpoints_path}/{opt.name}/net_latest', map_location=cuda))
     net.eval()
 
     
     with torch.no_grad():
-        image = cv2.imread(os.path.join(eval_opt.eval_input, 'IMAGE.jpg'))
-        image = image / 255.0
+        mask = cv2.imread(os.path.join(eval_opt.eval_input, 'MASK.png'), cv2.IMREAD_GRAYSCALE) / 255.0
+        mask_3d = mask[:, :, None]
         
-        mask = cv2.imread(os.path.join(eval_opt.eval_input, 'MASK.png'))
-        mask = mask[:, :, 0] != 0
-        
-        image = torch.Tensor(image).T.unsqueeze(0)
-        image = image.to(device=cuda)
-        
-        albedo = cv2.imread(os.path.join(eval_opt.eval_input, 'ALBEDO.jpg'))
-        albedo = albedo / 255.0
-        for i in range(albedo.shape[0]): # mask albedo
-            for j in range(albedo.shape[1]):
-                if not mask[i][j]:
-                    albedo[i][j] = [0, 0, 0]
+        albedo = cv2.imread(os.path.join(eval_opt.eval_input, 'ALBEDO.jpg'), cv2.IMREAD_COLOR) / 255.0
+        albedo = albedo * mask_3d
+        albedo = torch.from_numpy(albedo.astype(np.float32)).to(device=cuda)
 
         light_dir = os.path.join(opt.dataroot, '..', 'datas', 'sh')
         lights = np.load(os.path.join(light_dir, os.listdir(light_dir)[0]))
         light = lights[eval_opt.eval_light]
+        light = torch.from_numpy(light.astype(np.float32)).to(device=cuda)
 
         transport = []
         for i in range(9):
             transport_path = os.path.join(eval_opt.eval_input, '%01d.jpg' % (i))
-            tmp = cv2.imread(transport_path)[:, :, 0:1] # TODO: 进一步cvt
+            tmp = cv2.imread(transport_path, cv2.IMREAD_GRAYSCALE) / 255.0
             if len(transport) == 0:
-                transport = tmp
+                transport = tmp[:, :, None]
             else:
-                transport = np.concatenate((transport, tmp), axis= 2)
+                transport = np.concatenate((transport, tmp[:, :, None]), axis= 2)
+        transport = transport * mask_3d
+        transport = torch.from_numpy(transport.astype(np.float32)).to(device=cuda)
 
-        for i in range(transport.shape[0]): # mask transport
-            for j in range(transport.shape[1]):
-                if not mask[i][j]:
-                    transport[i][j] = [0] * 9
-        
-        cv2.imwrite('./eval/gt_without_reshape.jpg', albedo * (transport @ light))
-        
-        mask = torch.Tensor(mask.reshape((-1))).T.unsqueeze(0)
-        mask = mask.to(device=cuda)
-        albedo = torch.Tensor(albedo.reshape((-1, 3))).T.unsqueeze(0).to(cuda)
-        light = torch.Tensor(light).T.unsqueeze(0).to(cuda)
-        transport = torch.Tensor(transport.reshape((-1, 9))).T.unsqueeze(0).to(cuda)
-        image_gt = (albedo * torch.bmm(light, transport)).squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
-        cv2.imwrite('./eval/gt.jpg', image_gt.numpy())
-
+        image = albedo * torch.matmul(transport, light)
+        image = 2 * image - 1
+        image = image.permute(2, 0, 1)[None, :, :, :].to(device=cuda)
         albedo_eval, light_eval, transport_eval = net(image)
+
+        mask = torch.from_numpy(mask.astype(np.float32)).unsqueeze(0).to(device=cuda)
+        albedo = albedo.permute(2, 0, 1).unsqueeze(0)
+        light = light.unsqueeze(0)
+        transport = transport.permute(2, 0, 1).unsqueeze(0)
         
         error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
         
-        mask = mask.reshape((-1, 1, 1024, 1024))
-        
-        for i in range(3):
-            albedo_eval[:, 0, :, :] = albedo_eval[:, i, :, :] * mask[:, 0, :, :]
-        
-        for i in range(9):
-            transport_eval[:, i, :, :] = transport_eval[:, i, :, :] * mask[:, 0, :, :]
+        cv2.imwrite(eval_opt.eval_output, albedo_eval.squeeze().permute(1, 2, 0).to('cpu').numpy() * 255.0)
 
-        light_eval = light_eval.reshape((-1, 3, 9))        
-        albedo_eval = albedo_eval.reshape((albedo_eval.shape[0], albedo_eval.shape[1], -1))
-        transport_eval = transport_eval.reshape((transport_eval.shape[0], transport_eval.shape[1], -1))
-        
-        image_eval = albedo_eval * torch.bmm(light_eval, transport_eval) # 因为light_eval和transport_eval的维度是颠倒的，所以矩阵乘法也颠倒一下
-        image_eval = image_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
-        
-        # 只衡量某种结果
-        parser.add_argument('--eval_half_output', default='eval/eval_half.jpg', help='eval_half output path')
-        image_half_eval = albedo * torch.bmm(light_eval, transport_eval)
-        image_half_eval = image_half_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu')
-        cv2.imwrite(eval_opt.eval_half_output, image_half_eval.numpy())
-
-    cv2.imwrite('./eval/eval_albedo.jpg', albedo_eval.squeeze(0).reshape((-1, 1024, 1024)).permute(1, 2, 0).to('cpu').numpy()*255)
     print(f'error: {error}')
-    cv2.imwrite(eval_opt.eval_output, image_eval.numpy())

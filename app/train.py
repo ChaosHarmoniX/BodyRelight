@@ -27,8 +27,6 @@ import time
 
 # get options
 opt = BaseOptions().parse() # 一些配置，比如batch_size、线程数
-print("hello")
-print(opt.plot)
 if opt.plot:
     train_wind = Visdom()
     # # 初始化窗口信息
