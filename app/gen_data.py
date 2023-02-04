@@ -65,7 +65,7 @@ def gen_all_datasset():
         os.mkdir(os.path.join(ROOT_PATH, 'data'))
         
     # arguments:
-    arg_size=512
+    arg_size=1024
     arg_ms_rate=1
     arg_egl=False
     from lib.renderer.gl.init_gl import initialize_GL_context
@@ -111,26 +111,6 @@ def gen_all_datasset():
         else:
             print("IMAGE file exist")
               
-            
-
-             
-        
-        
-        
-        
-        
-    
-    
-    
-    
-    
-
-        
-        
-    
-    
-
-
 
 if __name__ == '__main__':
     gen_all_datasset()
