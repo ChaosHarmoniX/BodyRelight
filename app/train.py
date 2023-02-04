@@ -16,9 +16,9 @@ import json
 from lib.options import *
 from tqdm import tqdm
 
-# delete warnings
-import warnings
-warnings.filterwarnings("ignore")
+# # delete warnings
+# import warnings
+# warnings.filterwarnings("ignore")
 
 # for debug
 from visdom import Visdom
@@ -183,12 +183,12 @@ def train_epoch(epoch, net, train_dataloader, test_dataloader, loss, updater, de
         
 
 
-# 数据集的图片为512 * 512
+# 数据集的图片为1024 * 1024
 # aligned 3D models(脸朝前，垂直方向大小一致，padding一致（上下padding都为图片的5%）)。
 if __name__ == '__main__':
     # set cuda
     cuda = torch.device('cuda:%d' % opt.gpu_id)
-    net = BodyRelightNet(opt).to(device=cuda)
+    net = BodyRelightNet().to(device=cuda)
     
     # train dataset
     train_dataset = RelightDataset(opt, 'train')
@@ -203,5 +203,5 @@ if __name__ == '__main__':
     print('test data size: ', len(test_dataloader))
     
     # loss
-    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, weight_decay=0)
+    optimizer = torch.optim.Adam(net.parameters(), lr=opt.learning_rate, betas=(0.5, 0.999))
     train(net, train_dataloader, test_dataloader, loss, opt.num_epoch, optimizer, cuda, opt.plot)

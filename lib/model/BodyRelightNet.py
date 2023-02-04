@@ -6,10 +6,9 @@ from torch import nn
 from .decoder import Decoder
 
 class BodyRelightNet(nn.Module):
-    def __init__(self, opt):
+    def __init__(self):
         super(BodyRelightNet, self).__init__()
 
-        self.opt = opt
         self.encoder = MultiConv(filter_channels=[3, 64, 128, 256, 512, 512, 512], start_with_bn=False)
 
         self.albedo_decoder = Decoder(output=3, clamp=False)
