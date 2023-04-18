@@ -52,6 +52,10 @@ class BaseOptions():
         parser.add_argument('--load_net_checkpoint_path', type=str, default=None, help='path to save checkpoints')
         parser.add_argument('--results_path', type=str, default='./results', help='path to save results ply')
 
+        # parser.add_argument('--raw_image_port', type=int, default=1025, help='port to listen where raw images from camera is passed in')
+        parser.add_argument('--light_port', type=int, default=1025, help='port to listen where light from ue is passed in')
+        parser.add_argument('--video_path', type=str, default='./datas/video/test.mp4')
+
         # special tasks
         self.initialized = True
         return parser
