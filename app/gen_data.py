@@ -51,7 +51,7 @@ from app.transfer_map import render_transfer_map
 from app.render_data import render_prt_ortho
 
 data_root_PATH=ROOT_PATH+'/data'
-raw_data_path="D:/workspace/SRTP/data/THuman2.0_new/"
+raw_data_path="E:/workspace/SRTP/data/THuman2.0_new/"
 sh_src_npy_path=ROOT_PATH+'/datas/sh/env_sh.npy'
 
 def gen_all_datasset():

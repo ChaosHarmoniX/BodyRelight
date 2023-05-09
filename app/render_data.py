@@ -326,7 +326,7 @@ def render_prt_ortho(out_path, folder_name, subject_name, shs, rndr:PRTRender, i
 
     
 # 在这里设置你的数据集路径，需要精确到每个模型的obj文件所在的文件夹
-dataset_path="D:/workspace/SRTP/data/THuman2.0_new/0000"
+dataset_path="E:/workspace/SRTP/data/THuman2.0_new/0000"
 
 if __name__ == '__main__':
     shs = np.load('./datas/sh/env_sh.npy')
@@ -363,4 +363,4 @@ if __name__ == '__main__':
     # render_prt_ortho(args.out_dir, args.input, subject_name,
     #                  shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
     render_prt_ortho(args.out_dir, args.input, subject_name,
-                     shs, rndr, rndr_uv, args.size, 1, 1, pitch=[0])
+                     shs, rndr, rndr_uv, args.size, 1, 1)

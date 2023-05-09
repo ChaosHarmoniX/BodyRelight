@@ -12,6 +12,7 @@ datas/shres/
 output/
 scdata/
 !lib/data/
+databkup/
 datas/
 log.txt
 tmp.*

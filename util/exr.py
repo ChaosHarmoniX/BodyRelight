@@ -6,7 +6,7 @@ import imageio
 import os
 
 
-def render_exr(exrpath:str,target_folder:str,target_name:str)-> None:
+def render_exr(exrpath:str,target_folder:str,target_name:str):
     File = OpenEXR.InputFile(exrpath)
     PixType = Imath.PixelType(Imath.PixelType.FLOAT)
     DW = File.header()['dataWindow']

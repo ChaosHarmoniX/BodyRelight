@@ -100,41 +100,13 @@ void main()
 {
     vec2 uv = VertexIn.Texcoord;
     vec3 nC = normalize(VertexIn.ModelNormal);
-    // vec3 nml = nC;
 
-    // if(hasAlbedoMap == uint(0))
-    //     FragAlbedo = vec4(1.0);
-    // else
-    //     FragAlbedo = texture(AlbedoMap, uv);//gammaCorrection(texture(AlbedoMap, uv), 1.0/2.2);
-    // FragAlbedo = vec4(1.0);
-
-    // if(hasNormalMap == uint(0))
-    // {
-    //     if(analytic == uint(0))
-    //         FragShading = vec4(evaluateLightingModelPRT(prt), 1.0f);
-    //     else
-    //         FragShading = vec4(evaluateLightingModel(nC), 1.0f);
-    // }
-    // else
-    // {
-    //     vec3 n_tan = normalize(texture(NormalMap, uv).rgb*2.0-vec3(1.0));
-
-    //     mat3 TBN = mat3(normalize(VertexIn.Tangent),normalize(VertexIn.Bitangent),nC);
-    //     vec3 nH = normalize(TBN * n_tan);
-
-    //     if(analytic == uint(0))
-    //         FragShading = vec4(evaluateLightingModelHybrid(nC,nH,prt),1.0f);
-    //     else
-    //         FragShading = vec4(evaluateLightingModel(nH), 1.0f);
-    
-    //     nml = nH;
-    // }
     FragShading = vec4(nC, 1.0f);
 
 
     FragShading = gammaCorrection(FragShading, 2.2);
     FragColor = clamp(FragAlbedo * FragShading, 0.0, 1.0);
-    FragColor = texture(AlbedoMap, uv);
+    // FragColor = texture(AlbedoMap, uv);
     FragNormal = vec4(0.5*(nC+vec3(1.0)), 1.0);
     FragPosition = vec4(VertexIn.Position,VertexIn.Depth.x);
     FragShading = vec4(clamp(0.5*FragShading.xyz, 0.0, 1.0),1.0);

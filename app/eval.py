@@ -64,6 +64,17 @@ if __name__ == '__main__':
         
         error = calc_loss(mask, image, albedo_eval, light_eval, transport_eval, albedo, light, transport, loss).item()
         
-        cv2.imwrite(eval_opt.eval_output, albedo_eval.squeeze().permute(1, 2, 0).to('cpu').numpy() * 255.0)
+        albedo_eval_cpu = albedo_eval.squeeze().permute(1, 2, 0).to('cpu').numpy()
+        light_eval_cpu = light_eval.squeeze().to('cpu').numpy()
+        transport_eval_cpu = transport_eval.squeeze().permute(1, 2, 0).to('cpu').numpy()
+        img_eval_to_be_saved = albedo_eval_cpu * np.matmul(transport_eval_cpu, light_eval_cpu)
+        # CLIMP
+        img_eval_to_be_saved[img_eval_to_be_saved < 0] = 0
+        # gamma correction
+        img_eval_to_be_saved = np.power(img_eval_to_be_saved, 1/2.2)*255
+        # mask
+        img_eval_to_be_saved = img_eval_to_be_saved * mask_3d
+        
+        cv2.imwrite(eval_opt.eval_output, img_eval_to_be_saved)
 
     print(f'error: {error}')
