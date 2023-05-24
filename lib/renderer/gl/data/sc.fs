@@ -105,8 +105,8 @@ void main()
 
 
     FragShading = gammaCorrection(FragShading, 2.2);
-    FragColor = clamp(FragAlbedo * FragShading, 0.0, 1.0);
-    // FragColor = texture(AlbedoMap, uv);
+    // FragColor = clamp(FragAlbedo * FragShading, 0.0, 1.0);
+    FragColor = texture(AlbedoMap, uv);
     FragNormal = vec4(0.5*(nC+vec3(1.0)), 1.0);
     FragPosition = vec4(VertexIn.Position,VertexIn.Depth.x);
     FragShading = vec4(clamp(0.5*FragShading.xyz, 0.0, 1.0),1.0);

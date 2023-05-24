@@ -15,20 +15,23 @@ import cv2
 def filter1channel(oneChannel,sh0,sh1):
     clm = pysh.SHGrid.from_array(oneChannel)
     clm = clm.expand()
-    topo = pysh.expand.MakeGridDH(clm.coeffs, sampling=2) / 1000.
-    coeffs = pysh.expand.SHExpandDH(topo, sampling=2)
-    coeffs_filtered = coeffs.copy()
+    # topo = pysh.expand.MakeGridDH(clm.coeffs, sampling=2) / 1000.
+    # coeffs = pysh.expand.SHExpandDH(topo, sampling=2)
+    # coeffs_filtered = coeffs.copy()
+    coeffs_filtered = clm.coeffs
+    # print("coeffs shape is ",clm.coeffs.shape)
     coeffs_filtered[:, :sh0, :] = 0.
     coeffs_filtered[:, sh1:, :] = 0.
     coef= coeffs_filtered[:, sh0:sh1, :]    
-    print(coef.shape)
-    # topo_filtered = pysh.expand.MakeGridDH(coeffs_filtered, sampling=2)
-    fig, ax = plt.subplots(1, 1)
-    ax.imshow(topo, extent=(0, 360, -90, 90))
-    ax.set(xlabel='Longitude', ylabel='Latitude', yticks=np.arange(-90, 120, 30), xticks=np.arange(0, 390, 30))
-    ax.minorticks_on()
+    # print(coef.shape)
+    # get the (1,8) array of the coefficients
     
-    return coeffs_filtered
+    
+    
+    final_coef = coef[0,:,0]/10
+    print(final_coef)
+    
+    return final_coef
 
 
 
@@ -40,9 +43,13 @@ def image2sh(image,sh0,sh1):
     rc=filter1channel(r_img,sh0,sh1)
     gc=filter1channel(g_img,sh0,sh1)
     bc=filter1channel(b_img,sh0,sh1)
-    cand=np.stack([rc,gc,bc],axis=2)
+    # make 3 (9,) array to (1,9,3) array
+    sh=np.array([rc,gc,bc])
+    sh=sh.transpose(1,0)
+    sh=np.expand_dims(sh,axis=0)
     
-    return cand
+    
+    return sh
 
 # def render_exr(exrpath:str,target_folder:str,target_name:str):
 #     File = OpenEXR.InputFile(exrpath)
@@ -79,17 +86,27 @@ def exr2img(exrpath:str):
 
 
 
-img = exr2img('datas/sh/1.exr')
-img = cv2.resize(img,(512,256))
+img = exr2img('datas/s/2.exr')
+img = cv2.resize(img,(1024,512))
+cv2.imshow('img',img)
+cv2.waitKey(0)
+ssss
 print("read exr done")  
 # resize
 # imgshow=cv2.resize(img,(512,256))
 # cv2.imshow('img',imgshow)
 # cv2.waitKey(0)
 
-sh=image2sh(img,0,8)
+sh=image2sh(img,0,9)
 print("sh done")
-print(sh.shape)
+print(sh)
+# save as new.npy
+np.save('env_sh.npy',sh)
+
+
+# read sh
+shs = np.load('datas/sh/env_sh.npy')
+print(shs[0])
 
     
     

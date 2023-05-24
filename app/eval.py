@@ -34,11 +34,13 @@ if __name__ == '__main__':
         
         albedo = cv2.imread(os.path.join(eval_opt.eval_input, 'ALBEDO.jpg'), cv2.IMREAD_COLOR) / 255.0
         albedo = albedo * mask_3d
+        albedo_gt = albedo
         albedo = torch.from_numpy(albedo.astype(np.float32)).to(device=cuda)
 
         light_dir = os.path.join(opt.dataroot, '..', 'datas', 'sh')
         lights = np.load(os.path.join(light_dir, os.listdir(light_dir)[0]))
         light = lights[eval_opt.eval_light]
+        light_gt = light
         light = torch.from_numpy(light.astype(np.float32)).to(device=cuda)
 
         transport = []
@@ -50,11 +52,16 @@ if __name__ == '__main__':
             else:
                 transport = np.concatenate((transport, tmp[:, :, None]), axis= 2)
         transport = transport * mask_3d
+        transport_gt = transport
         transport = torch.from_numpy(transport.astype(np.float32)).to(device=cuda)
 
         image = albedo * torch.matmul(transport, light)
         image = 2 * image - 1
+        image_gt = image
+        
         image = image.permute(2, 0, 1)[None, :, :, :].to(device=cuda)
+        #
+        
         albedo_eval, light_eval, transport_eval = net(image)
 
         mask = torch.from_numpy(mask.astype(np.float32)).unsqueeze(0).to(device=cuda)
@@ -69,12 +76,21 @@ if __name__ == '__main__':
         transport_eval_cpu = transport_eval.squeeze().permute(1, 2, 0).to('cpu').numpy()
         img_eval_to_be_saved = albedo_eval_cpu * np.matmul(transport_eval_cpu, light_eval_cpu)
         # CLIMP
-        img_eval_to_be_saved[img_eval_to_be_saved < 0] = 0
-        # gamma correction
-        img_eval_to_be_saved = np.power(img_eval_to_be_saved, 1/2.2)*255
+        # img_eval_to_be_saved[img_eval_to_be_saved < 0] = 0
+        # # gamma correction
+        # img_eval_to_be_saved = np.power(img_eval_to_be_saved, 1/2.2)
         # mask
-        img_eval_to_be_saved = img_eval_to_be_saved * mask_3d
+        mask_3d_bar = 1 - mask_3d
         
-        cv2.imwrite(eval_opt.eval_output, img_eval_to_be_saved)
+        img_eval_to_be_saved = img_eval_to_be_saved * mask_3d
+        img_eval_to_be_saved = img_eval_to_be_saved + mask_3d_bar
+        cv2.imwrite(os.path.join(eval_opt.eval_input, 'eval.jpg'), img_eval_to_be_saved*255)
+        
+        
+        # ground truth image:
+        image_gt = albedo_gt * np.matmul(transport_gt, light_gt)
+        image_gt = image_gt + mask_3d_bar
+        print(image_gt.shape)
+        cv2.imwrite(os.path.join(eval_opt.eval_input, 'ALBEDO_GT.jpg'), image_gt* 255)
 
     print(f'error: {error}')

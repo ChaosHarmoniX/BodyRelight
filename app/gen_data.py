@@ -53,9 +53,15 @@ from app.render_data import render_prt_ortho
 data_root_PATH=ROOT_PATH+'/data'
 raw_data_path="E:/workspace/SRTP/data/THuman2.0_new/"
 sh_src_npy_path=ROOT_PATH+'/datas/sh/env_sh.npy'
+sh_src_npy_path1=ROOT_PATH+'/sh.txt'
 
 def gen_all_datasset():
-    shs=np.load(sh_src_npy_path)
+    # shs1=np.loadtxt(sh_src_npy_path1,dtype=np.float32)
+    # shs1 = shs1.reshape(1, 9,3)
+    # np.save(os.path.join(ROOT_PATH,'new_sh.npy'),shs1)
+    # print(shs1.shape)
+    
+    shs = np.load(sh_src_npy_path)
     data_folders=os.listdir(raw_data_path)
     
     print("Root Path: "+ROOT_PATH)
@@ -107,7 +113,7 @@ def gen_all_datasset():
         if(not os.path.exists(os.path.join(obj_root_path,'IMAGE','0239.jpg'))):
             print("IMAGE NOT FOUND")
             rndr=PRTRender(arg_size,arg_size,ms_rate=arg_ms_rate,egl=arg_egl)
-            render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw, shs, rndr,  arg_size,n_light=240,  pitch=[0])
+            render_prt_ortho(obj_root_path, obj_src_path, folder_of_raw, shs, rndr,  arg_size,n_light=1,  pitch=[0])
         else:
             print("IMAGE file exist")
               
